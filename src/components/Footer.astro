@@ -1,0 +1,49 @@
+---
+import { useTranslations, type Locale } from '../i18n';
+
+interface Props {
+  locale: Locale;
+}
+
+const { locale } = Astro.props;
+const t = useTranslations(locale);
+const year = new Date().getFullYear();
+---
+
+<footer class="site-footer">
+  <div class="wrap">
+    <p class="copy">
+      © {year} Tomás González Cifuentes. {t('footer.rights')}
+    </p>
+    <p class="note">
+      <small>
+        {locale === 'es'
+          ? 'Las imágenes de este sitio no pueden reproducirse, distribuirse ni utilizarse para entrenar modelos de inteligencia artificial sin autorización escrita del autor.'
+          : 'The images on this site may not be reproduced, distributed, or used to train artificial intelligence models without the written permission of the author.'}
+      </small>
+    </p>
+  </div>
+</footer>
+
+<style>
+  .site-footer {
+    border-top: 1px solid var(--border);
+    padding: 32px clamp(16px, 4vw, 32px);
+    color: var(--fg-muted);
+    background: var(--bg);
+  }
+  .wrap {
+    max-width: var(--maxw);
+    margin-inline: auto;
+  }
+  .copy {
+    margin: 0 0 6px;
+    font-size: 0.9rem;
+  }
+  .note {
+    margin: 0;
+    max-width: 70ch;
+    font-size: 0.78rem;
+    line-height: 1.5;
+  }
+</style>

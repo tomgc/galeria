@@ -1,0 +1,172 @@
+---
+import { useTranslations, type Locale } from '../i18n';
+
+interface Props {
+  locale: Locale;
+}
+
+const { locale } = Astro.props;
+const t = useTranslations(locale);
+
+const otherLocale: Locale = locale === 'es' ? 'en' : 'es';
+const base = import.meta.env.BASE_URL.replace(/\/$/, '');
+
+// Construir rutas equivalentes en el otro idioma reemplazando el primer segmento.
+const currentPath = Astro.url.pathname.replace(base, '').replace(/^\/(es|en)/, '');
+const otherLocaleHref = `${base}/${otherLocale}${currentPath || '/'}`;
+
+const nav = [
+  { href: `${base}/${locale}/`, label: t('nav.home') },
+  { href: `${base}/${locale}/aves/`, label: t('nav.birds') },
+  { href: `${base}/${locale}/paisajes/`, label: t('nav.landscapes') },
+  { href: `${base}/${locale}/sobre-mi/`, label: t('nav.about') },
+  { href: `${base}/${locale}/contacto/`, label: t('nav.contact') },
+];
+---
+
+<header class="site-header">
+  <div class="bar">
+    <a class="brand" href={`${base}/${locale}/`}>
+      <span class="brand-name">Tomás González Cifuentes</span>
+      <span class="brand-sub">Fotografía de naturaleza</span>
+    </a>
+
+    <nav aria-label="Principal">
+      <ul>
+        {nav.map((item) => (
+          <li>
+            <a
+              href={item.href}
+              aria-current={Astro.url.pathname === item.href ? 'page' : undefined}
+            >
+              {item.label}
+            </a>
+          </li>
+        ))}
+      </ul>
+    </nav>
+
+    <div class="actions">
+      <a class="lang" href={otherLocaleHref} hreflang={otherLocale}>
+        {t('lang.switch')}
+      </a>
+      <button
+        type="button"
+        id="theme-toggle"
+        aria-label={t('theme.toggle')}
+        title={t('theme.toggle')}
+      >
+        <span class="theme-icon" aria-hidden="true">◐</span>
+      </button>
+    </div>
+  </div>
+</header>
+
+<style>
+  .site-header {
+    border-bottom: 1px solid var(--border);
+    background: var(--bg);
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    backdrop-filter: saturate(180%) blur(8px);
+  }
+
+  .bar {
+    max-width: var(--maxw);
+    margin-inline: auto;
+    padding: 14px clamp(16px, 4vw, 32px);
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    align-items: center;
+    gap: 24px;
+  }
+
+  .brand {
+    border: 0;
+    display: flex;
+    flex-direction: column;
+    line-height: 1.2;
+  }
+  .brand-name {
+    font-family: var(--font-serif);
+    font-size: 1.05rem;
+  }
+  .brand-sub {
+    font-size: 0.78rem;
+    color: var(--fg-muted);
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+  }
+
+  nav ul {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    gap: clamp(12px, 2.5vw, 24px);
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+  nav a {
+    border: 0;
+    font-size: 0.95rem;
+    padding: 4px 0;
+    border-bottom: 1px solid transparent;
+  }
+  nav a[aria-current='page'] {
+    border-bottom-color: currentColor;
+  }
+
+  .actions {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+  }
+  .lang {
+    border: 0;
+    font-size: 0.85rem;
+    color: var(--fg-muted);
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+  }
+  .theme-icon { font-size: 1.1rem; }
+
+  @media (max-width: 768px) {
+    .bar {
+      grid-template-columns: 1fr auto;
+      grid-template-areas: 'brand actions' 'nav nav';
+      row-gap: 12px;
+    }
+    .brand { grid-area: brand; }
+    .actions { grid-area: actions; }
+    nav { grid-area: nav; }
+    nav ul { justify-content: flex-start; }
+  }
+</style>
+
+<script>
+  // Toggle de tema con persistencia en localStorage.
+  // Respeta prefers-color-scheme si no hay preferencia guardada.
+  const KEY = 'galeria-theme';
+  const root = document.documentElement;
+
+  function apply(theme: 'light' | 'dark') {
+    root.setAttribute('data-theme', theme);
+  }
+
+  function current(): 'light' | 'dark' {
+    const stored = localStorage.getItem(KEY);
+    if (stored === 'light' || stored === 'dark') return stored;
+    return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+  }
+
+  apply(current());
+
+  const btn = document.getElementById('theme-toggle');
+  btn?.addEventListener('click', () => {
+    const next = current() === 'dark' ? 'light' : 'dark';
+    localStorage.setItem(KEY, next);
+    apply(next);
+  });
+</script>

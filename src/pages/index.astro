@@ -1,22 +1,23 @@
 ---
-// Redirección a la versión en español (locale por defecto).
-// En sitios estáticos, usar <meta http-equiv="refresh"> para no requerir JS.
-import { getRelativeLocaleUrl } from 'astro:i18n';
-
-const target = getRelativeLocaleUrl('es', '');
+// Redirección estática a la versión en español (locale por defecto).
+// Usamos <meta http-equiv="refresh"> para no requerir JS y mantener SEO básico.
+const base = import.meta.env.BASE_URL.replace(/\/$/, '');
+const target = `${base}/es/`;
 ---
 
 <!doctype html>
 <html lang="es">
   <head>
     <meta charset="utf-8" />
-    <title>Galería — Tomás González Cifuentes</title>
+    <title>Tomás González Cifuentes — Fotografía de naturaleza</title>
+    <meta name="robots" content="noindex" />
     <meta http-equiv="refresh" content={`0; url=${target}`} />
     <link rel="canonical" href={target} />
   </head>
   <body>
     <p>
-      Redirigiendo a <a href={target}>{target}</a>…
+      <a href={target}>Ir al sitio en español</a> /
+      <a href={`${base}/en/`}>Go to English version</a>
     </p>
   </body>
 </html>

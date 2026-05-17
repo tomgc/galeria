@@ -1,0 +1,118 @@
+---
+import '../styles/global.css';
+import Header from '../components/Header.astro';
+import Footer from '../components/Footer.astro';
+import { useTranslations, type Locale, defaultLocale } from '../i18n';
+
+interface Props {
+  title?: string;
+  description?: string;
+  locale?: Locale;
+  /** Imagen para Open Graph / Twitter Card (URL absoluta o relativa al sitio). */
+  ogImage?: string;
+  /** `index,follow` por defecto. Pasa 'noindex' en páginas que no quieras indexar. */
+  robots?: string;
+}
+
+const {
+  title,
+  description,
+  locale = defaultLocale,
+  ogImage,
+  robots = 'index, follow, max-image-preview:standard',
+} = Astro.props;
+
+const t = useTranslations(locale);
+const fullTitle = title ? `${title} — Tomás González Cifuentes` : t('site.title');
+const desc = description ?? t('site.description');
+
+const goatcounterCode = import.meta.env.PUBLIC_GOATCOUNTER_CODE;
+
+// URL canónica
+const canonicalURL = new URL(Astro.url.pathname, Astro.site);
+const ogImageURL = ogImage ? new URL(ogImage, Astro.site).toString() : undefined;
+---
+
+<!doctype html>
+<html lang={locale}>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="generator" content={Astro.generator} />
+
+    <title>{fullTitle}</title>
+    <meta name="description" content={desc} />
+
+    <meta name="author" content="Tomás González Cifuentes" />
+    <meta name="copyright" content="© Tomás González Cifuentes" />
+    <meta name="robots" content={robots} />
+
+    <link rel="canonical" href={canonicalURL.toString()} />
+    <link rel="alternate" hreflang="es" href={`${Astro.site}es/`} />
+    <link rel="alternate" hreflang="en" href={`${Astro.site}en/`} />
+    <link rel="alternate" hreflang="x-default" href={`${Astro.site}es/`} />
+
+    <link rel="icon" type="image/svg+xml" href={`${import.meta.env.BASE_URL}favicon.svg`} />
+
+    <!-- Open Graph -->
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content={fullTitle} />
+    <meta property="og:description" content={desc} />
+    <meta property="og:url" content={canonicalURL.toString()} />
+    <meta property="og:locale" content={locale === 'es' ? 'es_CL' : 'en_US'} />
+    {ogImageURL && <meta property="og:image" content={ogImageURL} />}
+
+    <!-- Twitter -->
+    <meta name="twitter:card" content={ogImageURL ? 'summary_large_image' : 'summary'} />
+    <meta name="twitter:title" content={fullTitle} />
+    <meta name="twitter:description" content={desc} />
+    {ogImageURL && <meta name="twitter:image" content={ogImageURL} />}
+
+    <!-- Aplicar tema antes de pintar para evitar flash -->
+    <script is:inline>
+      (function () {
+        try {
+          var stored = localStorage.getItem('galeria-theme');
+          var theme = (stored === 'light' || stored === 'dark')
+            ? stored
+            : (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+          document.documentElement.setAttribute('data-theme', theme);
+        } catch (e) { /* sin storage: usa default */ }
+      })();
+    </script>
+
+    <slot name="head" />
+  </head>
+  <body>
+    <a class="skip-link" href="#main">{locale === 'es' ? 'Saltar al contenido' : 'Skip to content'}</a>
+
+    <Header locale={locale} />
+
+    <main id="main">
+      <slot />
+    </main>
+
+    <Footer locale={locale} />
+
+    {goatcounterCode && (
+      <script
+        is:inline
+        data-goatcounter={`https://${goatcounterCode}.goatcounter.com/count`}
+        async
+        src="//gc.zgo.at/count.js"
+      ></script>
+    )}
+
+    <!-- Disuasión de descarga casual: click derecho bloqueado sobre <img>. Aclaración: es solo disuasivo. -->
+    <script is:inline>
+      document.addEventListener('contextmenu', function (e) {
+        var t = e.target;
+        if (t && t.tagName === 'IMG') e.preventDefault();
+      });
+      document.addEventListener('dragstart', function (e) {
+        var t = e.target;
+        if (t && t.tagName === 'IMG') e.preventDefault();
+      });
+    </script>
+  </body>
+</html>
