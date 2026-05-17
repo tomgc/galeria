@@ -1,0 +1,32 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+---
+
+<BaseLayout
+  locale="en"
+  title="About"
+  description="Tomás González Cifuentes — nature photographer based in Chile."
+>
+  <article class="about">
+    <h1>About</h1>
+
+    <p class="lead">
+      I'm Tomás González Cifuentes, a nature photographer based in Chile.
+      My work focuses on birds and landscapes of the southern continent.
+    </p>
+
+    <p>
+      <em>[Bio pending. This page is a translation stub.]</em>
+    </p>
+
+    <p>
+      For collaborations, image licensing or print sales, please reach me
+      via the <a href={`${import.meta.env.BASE_URL.replace(/\/$/, '')}/en/contacto/`}>contact page</a>.
+    </p>
+  </article>
+</BaseLayout>
+
+<style>
+  .about { max-width: 65ch; }
+  .lead { font-size: 1.1rem; }
+</style>

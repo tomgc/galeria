@@ -1,0 +1,28 @@
+---
+import BaseLayout from '../../../layouts/BaseLayout.astro';
+import Gallery from '../../../components/Gallery.astro';
+import TagFilter from '../../../components/TagFilter.astro';
+import { getAllPhotos } from '../../../lib/photos';
+
+const all = await getAllPhotos();
+const photos = all.filter((p) => p.data.category === 'aves');
+
+const counts: Record<string, number> = {};
+for (const p of photos) for (const t of p.data.tags) counts[t] = (counts[t] ?? 0) + 1;
+const tags = Object.keys(counts);
+---
+
+<BaseLayout
+  locale="en"
+  title="Birds"
+  description="Bird photography from Chile and Patagonia. Original work by Tomás González Cifuentes."
+>
+  <h1>Birds</h1>
+  <p class="note"><em>English translation in progress — some labels still appear in Spanish.</em></p>
+  <TagFilter tags={tags} locale="en" counts={counts} />
+  <Gallery photos={photos} locale="en" />
+</BaseLayout>
+
+<style>
+  .note { color: var(--fg-muted); font-size: 0.85rem; }
+</style>

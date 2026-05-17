@@ -1,0 +1,41 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import ObfuscatedEmail from '../../components/ObfuscatedEmail.astro';
+import { useTranslations } from '../../i18n';
+
+const t = useTranslations('en');
+---
+
+<BaseLayout
+  locale="en"
+  title="Contact"
+  description="Contact Tomás González Cifuentes for collaborations, image licensing or print sales."
+>
+  <article class="contact">
+    <h1>{t('contact.heading')}</h1>
+    <p class="lead">{t('contact.intro')}</p>
+
+    <p class="email-row">
+      <strong>{t('contact.email_label')}:</strong>{' '}
+      <ObfuscatedEmail subject="Inquiry from galeria.tomgc" />
+    </p>
+
+    <p class="note">
+      The images on this site are original works protected by copyright.
+      Any use requires written permission. For commercial licenses, limited
+      editions or fine-art prints, please contact me directly.
+    </p>
+  </article>
+</BaseLayout>
+
+<style>
+  .contact { max-width: 65ch; }
+  .lead { font-size: 1.1rem; }
+  .email-row {
+    padding: 16px 0;
+    border-top: 1px solid var(--border);
+    border-bottom: 1px solid var(--border);
+    margin: 24px 0;
+  }
+  .note { color: var(--fg-muted); font-size: 0.9rem; }
+</style>

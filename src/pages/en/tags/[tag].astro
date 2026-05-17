@@ -1,0 +1,43 @@
+---
+import BaseLayout from '../../../layouts/BaseLayout.astro';
+import Gallery from '../../../components/Gallery.astro';
+import TagFilter from '../../../components/TagFilter.astro';
+import { getAllPhotos, getTagsWithCounts } from '../../../lib/photos';
+import type { GetStaticPaths } from 'astro';
+
+export const getStaticPaths: GetStaticPaths = async () => {
+  const { tags, counts } = await getTagsWithCounts();
+  const all = await getAllPhotos();
+  return tags.map((tag) => ({
+    params: { tag },
+    props: {
+      tag,
+      photos: all.filter((p) => p.data.tags.includes(tag)),
+      allTags: tags,
+      counts,
+    },
+  }));
+};
+
+interface PageProps {
+  tag: string;
+  photos: Awaited<ReturnType<typeof getAllPhotos>>;
+  allTags: string[];
+  counts: Record<string, number>;
+}
+
+const { tag, photos, allTags, counts } = Astro.props as PageProps;
+---
+
+<BaseLayout
+  locale="en"
+  title={`#${tag}`}
+  description={`Photographs tagged "${tag}" — work by Tomás González Cifuentes.`}
+>
+  <h1>#{tag}</h1>
+  <p style="color: var(--fg-muted)">
+    {photos.length} {photos.length === 1 ? 'photograph' : 'photographs'}
+  </p>
+  <TagFilter tags={allTags} locale="en" activeTag={tag} counts={counts} />
+  <Gallery photos={photos} locale="en" />
+</BaseLayout>
