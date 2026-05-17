@@ -3,7 +3,9 @@
 > **⚠ Aviso de derechos de autor.** Las fotografías de este repositorio son
 > obra original de Tomás González Cifuentes y están protegidas. **No pueden
 > reproducirse, distribuirse ni utilizarse para entrenar modelos de
-> inteligencia artificial** sin autorización escrita. Ver [`LICENSE`](LICENSE).
+> inteligencia artificial** sin autorización escrita. Ver
+> [`LICENSE-PHOTOS.md`](LICENSE-PHOTOS.md) para los términos completos
+> aplicables a las fotos. El código fuente está bajo licencia [MIT](LICENSE).
 
 Sitio web estático para mostrar mi archivo de fotografía de naturaleza
 (aves y paisajes de Chile y la Patagonia), desplegado en GitHub Pages en
@@ -109,7 +111,14 @@ galeria/
 
 ## Licencia
 
-- **Código fuente**: [MIT](LICENSE).
-- **Fotografías y contenido visual**: © Tomás González Cifuentes, todos los
-  derechos reservados. Ver [`LICENSE`](LICENSE) para términos completos
-  (prohibición explícita de entrenamiento de IA y usos derivados).
+Este repositorio tiene **doble licencia**:
+
+- **Código fuente** (Astro, componentes, scripts) → [MIT](LICENSE). Libre
+  de usar, modificar y redistribuir.
+- **Fotografías y contenido visual** → © Tomás González Cifuentes, todos
+  los derechos reservados, con prohibición explícita de uso para
+  entrenamiento de IA y obras derivadas. Términos completos en
+  [`LICENSE-PHOTOS.md`](LICENSE-PHOTOS.md).
+
+Además, el sitio publica `robots.txt` y `ai.txt` que indican a crawlers
+y agentes automatizados los usos no autorizados.

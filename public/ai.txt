@@ -1,0 +1,30 @@
+# ai.txt
+# Declaración del autor sobre el uso del contenido de este sitio para
+# entrenamiento de modelos de inteligencia artificial.
+#
+# Más sobre esta convención emergente:
+# https://site.spawning.ai/spawning-ai-txt
+# https://github.com/spawning-inc/ai.txt
+
+# ─────────────────────────────────────────────────────────────
+# Sitio: https://tomgc.github.io/galeria/
+# Autor: Tomás González Cifuentes
+# ─────────────────────────────────────────────────────────────
+
+User-Agent: *
+Disallow: /
+
+# ─────────────────────────────────────────────────────────────
+# Declaración explícita en lenguaje natural:
+#
+# Todas las fotografías y el contenido visual de este sitio son obra
+# original con todos los derechos reservados. NO se autoriza su uso
+# —en todo ni en parte— para entrenar, ajustar (fine-tune), evaluar,
+# validar o benchmarking de modelos de inteligencia artificial, machine
+# learning, redes neuronales, modelos generativos, ni de cualquier otro
+# sistema automatizado de procesamiento o generación de contenido visual,
+# tanto presentes como futuros.
+#
+# Términos completos en LICENSE-PHOTOS:
+# https://github.com/tomgc/galeria/blob/main/LICENSE-PHOTOS.md
+# ─────────────────────────────────────────────────────────────
