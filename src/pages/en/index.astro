@@ -1,0 +1,31 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import Gallery from '../../components/Gallery.astro';
+import { getAllPhotos } from '../../lib/photos';
+
+const all = await getAllPhotos();
+const featured = all.filter((p) => p.data.featured);
+const photos = featured.length > 0 ? featured : all.slice(0, 12);
+---
+
+<BaseLayout locale="en" title="Home">
+  <section class="intro">
+    <h1>Nature photography</h1>
+    <p class="lead">
+      Birds and landscapes from southern Chile and Patagonia. A patient look at
+      the natural world, captured in original photographs.
+    </p>
+    <p class="note">
+      <em>The English version of this site is still being translated. Some
+      sections may appear in Spanish.</em>
+    </p>
+  </section>
+
+  <Gallery photos={photos} locale="en" />
+</BaseLayout>
+
+<style>
+  .intro { margin-bottom: 40px; max-width: 70ch; }
+  .lead { font-size: 1.1rem; color: var(--fg-muted); margin: 0 0 12px; }
+  .note { font-size: 0.85rem; color: var(--fg-muted); }
+</style>

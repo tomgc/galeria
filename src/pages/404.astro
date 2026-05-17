@@ -1,0 +1,23 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import { useTranslations } from '../i18n';
+const t = useTranslations('es');
+const base = import.meta.env.BASE_URL.replace(/\/$/, '');
+---
+
+<BaseLayout locale="es" title="404" robots="noindex">
+  <div class="nf">
+    <h1>{t('404.heading')}</h1>
+    <p>{t('404.body')}</p>
+    <p>
+      <a href={`${base}/es/`}>{t('404.cta')}</a>
+    </p>
+  </div>
+</BaseLayout>
+
+<style>
+  .nf {
+    text-align: center;
+    padding: 15vh 0;
+  }
+</style>

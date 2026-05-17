@@ -1,0 +1,55 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import ObfuscatedEmail from '../../components/ObfuscatedEmail.astro';
+import { useTranslations } from '../../i18n';
+
+const t = useTranslations('es');
+---
+
+<BaseLayout
+  locale="es"
+  title="Contacto"
+  description="Contacto con Tomás González Cifuentes para colaboraciones, licencias de uso de imágenes o compra de copias fotográficas."
+>
+  <article class="contact">
+    <h1>{t('contact.heading')}</h1>
+    <p class="lead">{t('contact.intro')}</p>
+
+    <p class="email-row">
+      <strong>{t('contact.email_label')}:</strong>{' '}
+      <ObfuscatedEmail subject="Contacto desde galeria.tomgc" />
+    </p>
+
+    <p class="note">
+      Las imágenes de este sitio son obra original protegida por derechos de
+      autor. Cualquier uso requiere autorización escrita. Para licencias
+      comerciales, ediciones limitadas o impresiones en alta calidad,
+      contáctame directamente.
+    </p>
+
+    <section class="social" aria-label="Redes sociales">
+      <h2>En otras plataformas</h2>
+      <ul>
+        <li><em>[Instagram — pendiente de configurar]</em></li>
+        <li><em>[Flickr / 500px — pendiente]</em></li>
+      </ul>
+    </section>
+  </article>
+</BaseLayout>
+
+<style>
+  .contact { max-width: 65ch; }
+  .lead { font-size: 1.1rem; }
+  .email-row {
+    padding: 16px 0;
+    border-top: 1px solid var(--border);
+    border-bottom: 1px solid var(--border);
+    margin: 24px 0;
+  }
+  .note {
+    color: var(--fg-muted);
+    font-size: 0.9rem;
+  }
+  .social h2 { font-size: 1.1rem; margin-top: 32px; }
+  .social ul { list-style: none; padding: 0; color: var(--fg-muted); }
+</style>

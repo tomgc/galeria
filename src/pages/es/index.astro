@@ -1,0 +1,35 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import Gallery from '../../components/Gallery.astro';
+import { getAllPhotos } from '../../lib/photos';
+import { useTranslations } from '../../i18n';
+
+const t = useTranslations('es');
+const all = await getAllPhotos();
+const featured = all.filter((p) => p.data.featured);
+const photos = featured.length > 0 ? featured : all.slice(0, 12);
+---
+
+<BaseLayout locale="es" title="Portada">
+  <section class="intro">
+    <h1>Fotografía de naturaleza</h1>
+    <p class="lead">
+      Aves y paisajes del sur de Chile y la Patagonia. Una mirada paciente al
+      mundo natural, capturada en imágenes originales.
+    </p>
+  </section>
+
+  <Gallery photos={photos} locale="es" eagerCount={4} />
+</BaseLayout>
+
+<style>
+  .intro {
+    margin-bottom: 40px;
+    max-width: 70ch;
+  }
+  .lead {
+    font-size: 1.1rem;
+    color: var(--fg-muted);
+    margin: 0;
+  }
+</style>
