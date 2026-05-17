@@ -1,0 +1,62 @@
+---
+interface Props {
+  gallerySelector: string;
+}
+const { gallerySelector } = Astro.props;
+---
+
+<script define:vars={{ gallerySelector }}>
+  // Inicialización de PhotoSwipe v5 sobre la galería identificada por selector.
+  // La librería se importa dinámicamente para no bloquear el render inicial.
+  (async () => {
+    if (!document.querySelector(gallerySelector)) return;
+
+    const [{ default: PhotoSwipeLightbox }] = await Promise.all([
+      import('photoswipe/lightbox'),
+      import('photoswipe/style.css'),
+    ]);
+
+    const lightbox = new PhotoSwipeLightbox({
+      gallery: gallerySelector,
+      children: 'a[data-pswp-width]',
+      pswpModule: () => import('photoswipe'),
+      bgOpacity: 0.95,
+      showHideAnimationType: 'fade',
+      padding: { top: 24, bottom: 24, left: 12, right: 12 },
+    });
+
+    // Botón flotante: "Ver detalles" — navega a la página de detalle de la foto.
+    lightbox.on('uiRegister', () => {
+      lightbox.pswp?.ui?.registerElement({
+        name: 'detail-link',
+        order: 9,
+        isButton: true,
+        html: 'Ver detalles ↗',
+        onClick: (_e, _el, pswp) => {
+          const href = pswp.currSlide?.data?.element?.dataset?.detail;
+          if (href) window.location.href = href;
+        },
+      });
+    });
+
+    lightbox.init();
+  })();
+</script>
+
+<style is:global>
+  /* Tema oscuro del overlay también en modo claro: el lightbox siempre debe ser oscuro
+     para que la foto sea protagonista absoluta. */
+  .pswp__bg { background: #000; }
+
+  /* Botón "Ver detalles" estilizado discretamente */
+  .pswp__button--detail-link {
+    width: auto !important;
+    padding: 0 14px;
+    color: #fff;
+    font: 0.85rem/2.5 system-ui, sans-serif;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    opacity: 0.75;
+  }
+  .pswp__button--detail-link:hover { opacity: 1; }
+</style>

@@ -1,0 +1,76 @@
+---
+/**
+ * Renderiza un correo obfuscado: el HTML estático nunca contiene la cadena
+ * plana `usuario@dominio.tld`, sólo entidades numéricas (visible) y un blob
+ * base64 (data-attr) que JS decodifica al hacer click. Defeats regex scrapers
+ * básicos. Más sofisticados pueden vencerla; ver README sobre el trade-off.
+ */
+interface Props {
+  email?: string;
+  subject?: string;
+  /** Texto opcional para mostrar en vez del propio correo. */
+  label?: string;
+}
+
+const rawEmail = (Astro.props.email ?? import.meta.env.PUBLIC_CONTACT_EMAIL ?? '').trim();
+const subject = Astro.props.subject ?? 'Contacto desde galeria';
+const label = Astro.props.label;
+
+// Render visible como entidades HTML numéricas
+const visibleSource = label ?? rawEmail;
+const htmlEntities = Array.from(visibleSource)
+  .map((c) => `&#${c.charCodeAt(0)};`)
+  .join('');
+
+// Datos para el mailto, en base64 (otra capa contra regex genéricos)
+const b64 = (s: string) => Buffer.from(s, 'utf8').toString('base64');
+const dataMail = rawEmail ? b64(rawEmail) : '';
+const dataSubject = b64(subject);
+
+const hasEmail = rawEmail.length > 0;
+---
+
+{hasEmail ? (
+  <button
+    type="button"
+    class="obf-email"
+    data-m={dataMail}
+    data-s={dataSubject}
+    aria-label="Abrir cliente de correo"
+  >
+    <Fragment set:html={htmlEntities} />
+  </button>
+) : (
+  <span class="obf-email empty" aria-disabled="true">[contacto no configurado]</span>
+)}
+
+<style>
+  .obf-email {
+    background: transparent;
+    border: 0;
+    padding: 0;
+    font: inherit;
+    color: inherit;
+    text-decoration: underline;
+    text-underline-offset: 4px;
+    cursor: pointer;
+    transition: opacity var(--transition);
+  }
+  .obf-email:hover { opacity: 0.7; }
+  .obf-email.empty { color: var(--fg-muted); text-decoration: none; cursor: default; }
+</style>
+
+<script>
+  document.querySelectorAll<HTMLButtonElement>('.obf-email[data-m]').forEach((el) => {
+    el.addEventListener('click', () => {
+      try {
+        const m = atob(el.dataset.m || '');
+        const s = atob(el.dataset.s || '');
+        const href = `mailto:${m}?subject=${encodeURIComponent(s)}`;
+        window.location.href = href;
+      } catch (_e) {
+        /* noop */
+      }
+    });
+  });
+</script>
