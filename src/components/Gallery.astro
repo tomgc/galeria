@@ -15,6 +15,17 @@ interface Props {
 const { photos, locale, eagerCount = 4 } = Astro.props;
 const t = useTranslations(locale);
 const galleryId = `gallery-${Math.random().toString(36).slice(2, 8)}`;
+
+// Calcula cuántas columnas debe abarcar cada card según su aspect ratio.
+// - Panorámicas (>1.8:1, más anchas que 16:9): 2 columnas para que respiren.
+// - Resto: 1 columna.
+// Si solo hay 1 foto, no la ensanchamos (no tiene con qué contrastar).
+const PANORAMA_THRESHOLD = 1.8;
+const decorated = photos.map((p) => {
+  const ratio = p.data.image.width / p.data.image.height;
+  const wide = ratio > PANORAMA_THRESHOLD && photos.length > 1;
+  return { photo: p, wide, ratio };
+});
 ---
 
 {photos.length === 0 ? (
@@ -24,11 +35,12 @@ const galleryId = `gallery-${Math.random().toString(36).slice(2, 8)}`;
   </div>
 ) : (
   <>
-    <div id={galleryId} class="gallery">
-      {photos.map((photo, i) => (
+    <div id={galleryId} class="gallery" data-masonry>
+      {decorated.map(({ photo, wide }, i) => (
         <PhotoCard
           photo={photo}
           locale={locale}
+          wide={wide}
           loading={i < eagerCount ? 'eager' : 'lazy'}
         />
       ))}
@@ -39,18 +51,21 @@ const galleryId = `gallery-${Math.random().toString(36).slice(2, 8)}`;
 
 <style>
   .gallery {
-    column-count: 1;
-    column-gap: var(--gap);
-    margin: 0;
+    display: grid;
+    grid-template-columns: 1fr;
+    grid-auto-rows: 4px;
+    grid-auto-flow: dense;
+    gap: var(--gap);
   }
+
   @media (min-width: 640px) {
-    .gallery { column-count: 2; }
+    .gallery { grid-template-columns: repeat(2, 1fr); }
   }
   @media (min-width: 1024px) {
-    .gallery { column-count: 3; }
+    .gallery { grid-template-columns: repeat(3, 1fr); }
   }
   @media (min-width: 1440px) {
-    .gallery { column-count: 4; }
+    .gallery { grid-template-columns: repeat(4, 1fr); }
   }
 
   .empty {
@@ -62,3 +77,60 @@ const galleryId = `gallery-${Math.random().toString(36).slice(2, 8)}`;
     color: var(--fg);
   }
 </style>
+
+<script>
+  // Masonry "real": cada card toma N filas según su altura renderizada.
+  // Recalcula al cargar y al cambiar viewport para que el packing sea perfecto.
+  // El aspect-ratio que aplicamos en PhotoCard nos da heights deterministas
+  // sin esperar a que las imágenes carguen.
+  function setupMasonry() {
+    const galleries = document.querySelectorAll<HTMLElement>('[data-masonry]');
+    if (galleries.length === 0) return;
+
+    const ROW_UNIT = 4;
+
+    function applySpans() {
+      for (const gallery of galleries) {
+        const style = getComputedStyle(gallery);
+        const gap = parseFloat(style.rowGap || style.gap || '12');
+        const cards = gallery.children;
+        for (let i = 0; i < cards.length; i++) {
+          const card = cards[i] as HTMLElement;
+          // Medimos el thumb (con aspect-ratio) y el caption — NO la card,
+          // porque la card está restringida a la altura del row-span actual.
+          const thumb = card.querySelector('.thumb') as HTMLElement | null;
+          const caption = card.querySelector('figcaption') as HTMLElement | null;
+          const thumbH = thumb?.getBoundingClientRect().height ?? 0;
+          const captionH = caption?.getBoundingClientRect().height ?? 0;
+          const naturalH = Math.ceil(thumbH + captionH + 6);
+          if (naturalH < 10) continue; // ignora si aún no se midió
+          const span = Math.max(1, Math.ceil((naturalH + gap) / (ROW_UNIT + gap)));
+          card.style.gridRowEnd = `span ${span}`;
+        }
+      }
+    }
+
+    // Primer cálculo, después esperamos a que cualquier imagen lazy termine.
+    applySpans();
+
+    // ResizeObserver de cada card: cuando una imagen termina de cargar el
+    // card crece y reaplicamos.
+    const ro = new ResizeObserver(() => applySpans());
+    for (const gallery of galleries) {
+      for (const card of Array.from(gallery.children)) ro.observe(card);
+    }
+
+    // Reaplicar al redimensionar viewport (cambio de breakpoint).
+    let raf = 0;
+    window.addEventListener('resize', () => {
+      cancelAnimationFrame(raf);
+      raf = requestAnimationFrame(applySpans);
+    });
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', setupMasonry);
+  } else {
+    setupMasonry();
+  }
+</script>

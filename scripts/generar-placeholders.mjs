@@ -20,13 +20,15 @@ const INBOX = path.join(ROOT, '_inbox');
 
 const placeholders = [
   // Aves: tonos verdes/marrones, ratios variados
-  { slug: 'chucao-bosque-valdiviano', w: 2400, h: 1600, c1: '#2d3e1f', c2: '#5a7c47', label: 'Aves · 1' },
-  { slug: 'huet-huet-cordillera',     w: 1600, h: 2400, c1: '#3a2818', c2: '#6b4a2a', label: 'Aves · 2' },
-  { slug: 'carpintero-negro',          w: 2400, h: 1800, c1: '#1a1a1a', c2: '#5a3a2a', label: 'Aves · 3' },
+  { slug: 'chucao-bosque-valdiviano', w: 2400, h: 1600, c1: '#2d3e1f', c2: '#5a7c47', label: 'Aves · 3:2' },
+  { slug: 'huet-huet-cordillera',     w: 1600, h: 2400, c1: '#3a2818', c2: '#6b4a2a', label: 'Aves · 2:3 vertical' },
+  { slug: 'carpintero-negro',          w: 2400, h: 1800, c1: '#1a1a1a', c2: '#5a3a2a', label: 'Aves · 4:3' },
+  { slug: 'martin-pescador-rio',       w: 1500, h: 2700, c1: '#1a3a4a', c2: '#3a5a6a', label: 'Aves · 5:9 muy vertical' },
   // Paisajes: tonos azules/cálidos, ratios variados
-  { slug: 'torres-del-paine-amanecer', w: 3200, h: 1600, c1: '#5b3a4a', c2: '#c9956c', label: 'Paisajes · 1' },
-  { slug: 'volcan-villarrica',         w: 2400, h: 1800, c1: '#1a2e44', c2: '#4a7090', label: 'Paisajes · 2' },
-  { slug: 'glaciar-grey',              w: 2400, h: 2000, c1: '#3a5269', c2: '#a8c4d8', label: 'Paisajes · 3' },
+  { slug: 'torres-del-paine-amanecer', w: 3200, h: 1600, c1: '#5b3a4a', c2: '#c9956c', label: 'Paisajes · 2:1 cinemática' },
+  { slug: 'volcan-villarrica',         w: 2400, h: 1800, c1: '#1a2e44', c2: '#4a7090', label: 'Paisajes · 4:3' },
+  { slug: 'glaciar-grey',              w: 2400, h: 2000, c1: '#3a5269', c2: '#a8c4d8', label: 'Paisajes · 6:5' },
+  { slug: 'campo-de-hielo-sur',        w: 3500, h: 1000, c1: '#2a4a5a', c2: '#8aaac4', label: 'Paisajes · 3.5:1 panorámica' },
 ];
 
 await mkdir(INBOX, { recursive: true });

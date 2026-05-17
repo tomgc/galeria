@@ -22,7 +22,7 @@ exif:
   iso: 100
   focal_length: "24mm"
 
-description_es: "Ejemplo decorativo. Panorámica placeholder de las Torres del Paine con la primera luz del amanecer tiñendo el granito de rojo."
+description_es: "Ejemplo decorativo. Panorámica placeholder (2:1) — debería abarcar 2 columnas en la galería."
 description_en: ""
 
 featured: true

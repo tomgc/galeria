@@ -8,5 +8,4 @@ que crea el `.md` prellenado a partir del EXIF. Después rellenas
 manualmente `category`, `tags`, descripciones y todo lo que falte.
 
 > Nota: este `README.md` no es procesado como entrada de la colección
-> porque su frontmatter está vacío y el patrón del loader exige
-> archivos con campos válidos. Lo dejamos aquí solo como documentación.
+> (el loader lo excluye explícitamente).

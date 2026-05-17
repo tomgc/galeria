@@ -7,9 +7,11 @@ interface Props {
   photo: CollectionEntry<'photos'>;
   locale: Locale;
   loading?: 'lazy' | 'eager';
+  /** Si la foto debe abarcar 2 columnas (panorámicas) en pantallas con >=2 cols. */
+  wide?: boolean;
 }
 
-const { photo, locale, loading = 'lazy' } = Astro.props;
+const { photo, locale, loading = 'lazy', wide = false } = Astro.props;
 const base = import.meta.env.BASE_URL.replace(/\/$/, '');
 
 const data = photo.data;
@@ -25,9 +27,34 @@ const fullImg = await getImage({
 
 const ratio = data.image.width / data.image.height;
 const isPortrait = ratio < 0.95;
+const isTall = ratio < 0.65;
+const isPanorama = ratio > 1.8;
+
+// Aspect ratio inline para que el navegador reserve la altura correcta antes
+// de que la imagen cargue (sin layout shift, sin saltos en el masonry).
+const aspectRatio = `${data.image.width} / ${data.image.height}`;
+
+// `sizes` adapta el ancho según el spanning: wide cards ocupan 2 columnas,
+// que a su vez varían según breakpoint (1 → 2 → 3 → 4 cols).
+const sizes = wide
+  ? '(min-width: 1440px) 700px, (min-width: 1024px) 66vw, (min-width: 640px) 100vw, 100vw'
+  : '(min-width: 1440px) 360px, (min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw';
+
+// Anchos generados: para wide cards necesitamos versiones más grandes
+const pictureWidths = wide ? [600, 1200] : [400, 800];
+
+// Fallback SSR para el row-span del masonry. Estimación basada en columna
+// de ~340px (caso 4-col desktop). JS recalcula al cargar y al redimensionar.
+const baselineCol = 340;
+const cellW = wide ? baselineCol * 2 + 12 : baselineCol;
+const fallbackHeight = Math.ceil(cellW / ratio + 34); // 34 = caption + margen
+const fallbackSpan = Math.max(1, Math.ceil((fallbackHeight + 12) / 16)); // (h+gap)/(rowUnit+gap)
 ---
 
-<figure class:list={['card', { portrait: isPortrait }]}>
+<figure
+  class:list={['card', { wide, portrait: isPortrait, tall: isTall, panorama: isPanorama }]}
+  style={`--ratio: ${aspectRatio}; grid-row-end: span ${fallbackSpan};`}
+>
   <a
     class="thumb"
     href={fullImg.src}
@@ -39,8 +66,8 @@ const isPortrait = ratio < 0.95;
     <Picture
       src={data.image}
       formats={['avif', 'webp']}
-      widths={[400, 800]}
-      sizes="(min-width: 1440px) 400px, (min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw"
+      widths={pictureWidths}
+      sizes={sizes}
       alt={title}
       loading={loading}
       decoding="async"
@@ -55,26 +82,40 @@ const isPortrait = ratio < 0.95;
 
 <style>
   .card {
-    margin: 0 0 var(--gap);
-    break-inside: avoid;
-    page-break-inside: avoid;
+    margin: 0;
     position: relative;
+    display: flex;
+    flex-direction: column;
+    /* Card empieza con altura del thumb + caption, sin layout shift.       */
+    /* El grid de Gallery.astro le asigna row-span según getBoundingClientRect. */
   }
+  .card.wide {
+    grid-column: span 2;
+  }
+
+  /* En 1 columna (mobile), wide colapsa a 1 col porque no hay con qué */
+  @media (max-width: 639px) {
+    .card.wide { grid-column: auto; }
+  }
+
   .thumb {
     display: block;
     border: 0;
     overflow: hidden;
     background: var(--bg-elev);
     border-radius: var(--radius);
+    aspect-ratio: var(--ratio);
   }
   .photo {
     width: 100%;
-    height: auto;
+    height: 100%;
+    object-fit: cover;
     transition: transform 360ms ease, opacity 240ms ease;
   }
   .card:hover .photo {
     transform: scale(1.015);
   }
+
   figcaption {
     margin-top: 6px;
     font-size: 0.85rem;
