@@ -15,7 +15,7 @@
  *   npm run ingest -- --dry-run         # imprime acciones sin tocar archivos
  */
 
-import { readdir, mkdir, rename, writeFile, access } from 'node:fs/promises';
+import { readdir, mkdir, rename, writeFile, rm, stat, access } from 'node:fs/promises';
 import { existsSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -155,20 +155,64 @@ async function processOne(filename) {
     return { slug, exif };
   }
 
-  await pipeline
-    .jpeg({ quality: JPEG_QUALITY, mozjpeg: true })
-    .withMetadata({ exif: outputExif })
-    .toFile(outImage);
+  // Escritura semi-atómica: si falla cualquiera de los pasos, hacemos rollback
+  // de lo que se haya escrito. El rename del original va al final, así un
+  // fallo previo deja la foto en _inbox/ disponible para reintentar.
+  let imageWritten = false;
+  let mdWritten = false;
+  try {
+    await pipeline
+      .jpeg({ quality: JPEG_QUALITY, mozjpeg: true })
+      .withMetadata({ exif: outputExif })
+      .toFile(outImage);
+    imageWritten = true;
 
-  // Frontmatter prellenado
-  const frontmatter = buildFrontmatter(slug, exif);
-  await writeFile(outMd, frontmatter, 'utf8');
+    // Validación post-escritura (C.8)
+    const stats = await validateOutput(outImage, slug);
 
-  // Mover original a _procesadas
-  await mkdir(PROCESSED, { recursive: true });
-  await rename(srcPath, path.join(PROCESSED, filename));
+    const frontmatter = buildFrontmatter(slug, exif);
+    await writeFile(outMd, frontmatter, 'utf8');
+    mdWritten = true;
 
-  return { slug, exif };
+    // Mover original a _procesadas — última operación, después de validar
+    await mkdir(PROCESSED, { recursive: true });
+    await rename(srcPath, path.join(PROCESSED, filename));
+
+    return { slug, exif, stats };
+  } catch (err) {
+    if (imageWritten) await rm(outImage, { force: true }).catch(() => {});
+    if (mdWritten) await rm(outMd, { force: true }).catch(() => {});
+    throw err;
+  }
+}
+
+/** Verifica que la imagen de salida es legible, tiene dimensiones razonables
+ *  y conserva los campos EXIF Artist/Copyright. Devuelve metadata útil para
+ *  el resumen final. Si algo está mal, lanza error y se hace rollback. */
+async function validateOutput(imagePath, slug) {
+  const meta = await sharp(imagePath).metadata();
+  if (!meta.width || !meta.height) {
+    throw new Error(`Imagen de salida corrupta o no legible: ${slug}.jpg`);
+  }
+  const longSide = Math.max(meta.width, meta.height);
+  if (longSide > MAX_DIMENSION + 4) {
+    throw new Error(
+      `Imagen excede el límite de ${MAX_DIMENSION}px (lado mayor: ${longSide})`,
+    );
+  }
+  const fileStat = await stat(imagePath);
+  if (fileStat.size < 1024) {
+    throw new Error(`Imagen de salida sospechosamente pequeña: ${fileStat.size} bytes`);
+  }
+
+  const outExif = (await exifr.parse(imagePath, { ifd0: true }).catch(() => null)) || {};
+  if (!outExif.Artist || !outExif.Copyright) {
+    console.warn(
+      `  ⚠ EXIF Artist/Copyright no se grabó en ${slug}.jpg (sharp/libtiff puede saltarlo en algunos formatos)`,
+    );
+  }
+
+  return { width: meta.width, height: meta.height, sizeKB: Math.round(fileStat.size / 1024) };
 }
 
 function buildFrontmatter(slug, exif) {
@@ -257,6 +301,11 @@ image: "../../assets/photos/${slug}.jpg"
 
   console.log(`\n✓ Ingesta completada. ${results.length}/${entries.length} foto(s) procesadas.`);
   if (results.length > 0) {
+    console.log(`\nResumen:`);
+    for (const r of results) {
+      const dims = r.stats ? ` (${r.stats.width}×${r.stats.height}, ${r.stats.sizeKB} KB)` : '';
+      console.log(`  ✓ ${r.slug}${dims}`);
+    }
     console.log(`\nFaltan metadatos manuales en:`);
     for (const r of results) {
       console.log(`  - src/content/photos/${r.slug}.md  (category, tags, descripción, ubicación)`);
