@@ -1,0 +1,86 @@
+# robots.txt — galeria.tomgc
+# Permitir indexación a buscadores generales. Bloquear scrapers de imágenes
+# y agentes conocidos de entrenamiento de modelos de IA.
+
+# --- Buscadores generales ---
+User-agent: Googlebot
+Allow: /
+Disallow: /_assets/
+
+User-agent: Bingbot
+Allow: /
+Disallow: /_assets/
+
+User-agent: DuckDuckBot
+Allow: /
+Disallow: /_assets/
+
+# --- Por defecto: permitir HTML, bloquear assets de imagen directos ---
+User-agent: *
+Allow: /
+Disallow: /_assets/
+
+# --- Bots de entrenamiento de IA: bloqueados completamente ---
+User-agent: GPTBot
+Disallow: /
+
+User-agent: ChatGPT-User
+Disallow: /
+
+User-agent: OAI-SearchBot
+Disallow: /
+
+User-agent: Google-Extended
+Disallow: /
+
+User-agent: GoogleOther
+Disallow: /
+
+User-agent: CCBot
+Disallow: /
+
+User-agent: anthropic-ai
+Disallow: /
+
+User-agent: Claude-Web
+Disallow: /
+
+User-agent: ClaudeBot
+Disallow: /
+
+User-agent: cohere-ai
+Disallow: /
+
+User-agent: PerplexityBot
+Disallow: /
+
+User-agent: Bytespider
+Disallow: /
+
+User-agent: Amazonbot
+Disallow: /
+
+User-agent: FacebookBot
+Disallow: /
+
+User-agent: Meta-ExternalAgent
+Disallow: /
+
+User-agent: ImagesiftBot
+Disallow: /
+
+User-agent: img2dataset
+Disallow: /
+
+User-agent: Diffbot
+Disallow: /
+
+User-agent: Omgili
+Disallow: /
+
+# --- Archivado masivo ---
+User-agent: ia_archiver
+Disallow: /
+
+# --- Sitemap ---
+Sitemap: https://tomgc.github.io/galeria/sitemap-index.xml

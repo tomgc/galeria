@@ -1,0 +1,66 @@
+Licencia del proyecto
+=====================
+
+Este repositorio contiene dos tipos de obra con licencias distintas.
+
+────────────────────────────────────────
+1. CÓDIGO FUENTE — Licencia MIT
+────────────────────────────────────────
+
+Copyright (c) 2026 Tomás González Cifuentes
+
+Por la presente se concede permiso, libre de cargos, a cualquier persona
+que obtenga una copia de este software y de los archivos de documentación
+asociados (el "Software"), a utilizar el Software sin restricción,
+incluyendo sin limitación los derechos a usar, copiar, modificar, fusionar,
+publicar, distribuir, sublicenciar, y/o vender copias del Software, y a
+permitir a las personas a las que se les proporcione el Software hacer lo
+mismo, sujeto a las siguientes condiciones:
+
+El aviso de copyright anterior y este aviso de permiso se incluirán en
+todas las copias o partes sustanciales del Software.
+
+EL SOFTWARE SE PROPORCIONA "TAL CUAL", SIN GARANTÍA DE NINGÚN TIPO,
+EXPRESA O IMPLÍCITA, INCLUYENDO PERO NO LIMITADO A GARANTÍAS DE
+COMERCIALIZACIÓN, IDONEIDAD PARA UN PROPÓSITO PARTICULAR Y NO INFRACCIÓN.
+EN NINGÚN CASO LOS AUTORES O TITULARES DEL COPYRIGHT SERÁN RESPONSABLES
+DE NINGUNA RECLAMACIÓN, DAÑOS U OTRAS RESPONSABILIDADES, YA SEA EN UNA
+ACCIÓN CONTRACTUAL, AGRAVIO O DE OTRO TIPO, QUE SURJA DE, FUERA DE O EN
+CONEXIÓN CON EL SOFTWARE O EL USO U OTROS TIPOS DE NEGOCIACIONES EN EL
+SOFTWARE.
+
+────────────────────────────────────────
+2. FOTOGRAFÍAS Y CONTENIDO VISUAL — Todos los derechos reservados
+────────────────────────────────────────
+
+© Tomás González Cifuentes. Todos los derechos reservados.
+
+Las imágenes incluidas en este repositorio (incluyendo pero no limitado a
+los archivos bajo `src/assets/photos/`, `public/photos/` y cualquier
+archivo de imagen referenciado por las entradas de `src/content/photos/`),
+así como las descripciones, títulos y metadatos asociados, son obra
+original protegida por las leyes chilenas e internacionales de propiedad
+intelectual.
+
+Queda EXPRESAMENTE PROHIBIDO, sin autorización escrita previa del autor:
+
+  a) Reproducir, distribuir, transmitir, comunicar públicamente,
+     comercializar o exhibir las imágenes en cualquier soporte o medio.
+
+  b) Crear obras derivadas: modificar, alterar, recortar, retocar, o
+     producir cualquier obra basada en estas imágenes.
+
+  c) Utilizar las imágenes para entrenar, ajustar (fine-tune), o evaluar
+     sistemas de inteligencia artificial, modelos de aprendizaje
+     automático, redes neuronales, o cualquier sistema automatizado de
+     procesamiento o generación de contenido visual.
+
+  d) Almacenar las imágenes en bases de datos comerciales, agregadores,
+     o servicios de terceros con fines de redistribución.
+
+Para licencias de uso (editorial, comercial, impresión, etc.), contacte
+al autor a través del sitio web oficial.
+
+El hecho de que las imágenes sean accesibles públicamente desde el sitio
+web NO constituye autorización para ninguno de los usos descritos
+anteriormente.
