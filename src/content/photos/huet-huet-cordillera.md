@@ -13,6 +13,9 @@ location:
   city: "Conguillío"
   region: "La Araucanía"
   country: "Chile"
+coords:
+  lat: -38.658
+  lng: -71.654
 
 date_taken: 2025-10-03
 

@@ -31,6 +31,15 @@ const photos = defineCollection({
         })
         .default({}),
 
+      // Coordenadas GPS (opcional). Si están presentes la foto aparece en /mapa/.
+      // El script de ingesta las extrae del EXIF cuando existen.
+      coords: z
+        .object({
+          lat: z.number().min(-90).max(90),
+          lng: z.number().min(-180).max(180),
+        })
+        .optional(),
+
       date_taken: z.coerce.date(),
 
       camera: z

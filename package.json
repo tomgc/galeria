@@ -16,7 +16,9 @@
     "@astrojs/rss": "^4.0.18",
     "@astrojs/sitemap": "^3.2.1",
     "@fontsource/playfair-display": "^5.1.0",
+    "@types/leaflet": "^1.9.21",
     "astro": "^6.3.3",
+    "leaflet": "^1.9.4",
     "photoswipe": "^5.4.4"
   },
   "devDependencies": {

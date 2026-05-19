@@ -13,6 +13,9 @@ location:
   city: "Puerto Williams"
   region: "Magallanes y de la Antártica Chilena"
   country: "Chile"
+coords:
+  lat: -54.937
+  lng: -67.617
 
 date_taken: 2025-08-22
 

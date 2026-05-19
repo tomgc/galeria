@@ -1,0 +1,30 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import PhotoMap from '../../components/PhotoMap.astro';
+import { getAllPhotos } from '../../lib/photos';
+
+const photos = await getAllPhotos();
+const located = photos.filter((p) => p.data.coords);
+---
+
+<BaseLayout
+  locale="en"
+  title="Map"
+  description="Map of locations where Tomás González Cifuentes' photographs were taken — birds and landscapes from Chile and Patagonia."
+>
+  <h1>Map</h1>
+  <p class="lead">
+    Each marker is a photograph. Click to view and read the details.
+  </p>
+  <p class="count">
+    {located.length} of {photos.length}
+    {photos.length === 1 ? 'photograph with location' : 'photographs with location'}.
+  </p>
+
+  <PhotoMap photos={photos} locale="en" />
+</BaseLayout>
+
+<style>
+  .lead { color: var(--fg-muted); margin-bottom: 4px; max-width: 70ch; }
+  .count { color: var(--fg-muted); font-size: 0.85rem; margin: 0 0 24px; }
+</style>

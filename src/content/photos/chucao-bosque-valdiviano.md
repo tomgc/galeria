@@ -13,6 +13,9 @@ location:
   city: "Valdivia"
   region: "Los Ríos"
   country: "Chile"
+coords:
+  lat: -39.815
+  lng: -73.245
 
 date_taken: 2025-11-12
 

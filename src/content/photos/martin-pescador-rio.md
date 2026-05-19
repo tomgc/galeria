@@ -13,6 +13,9 @@ location:
   city: "Río Bueno"
   region: "Los Ríos"
   country: "Chile"
+coords:
+  lat: -40.331
+  lng: -72.957
 
 date_taken: 2025-07-14
 

@@ -9,6 +9,9 @@ location:
   city: "Parque Nacional Torres del Paine"
   region: "Magallanes y de la Antártica Chilena"
   country: "Chile"
+coords:
+  lat: -50.948
+  lng: -73.405
 
 date_taken: 2025-12-15
 

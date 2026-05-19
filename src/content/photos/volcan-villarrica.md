@@ -9,6 +9,9 @@ location:
   city: "Pucón"
   region: "La Araucanía"
   country: "Chile"
+coords:
+  lat: -39.422
+  lng: -71.939
 
 date_taken: 2025-09-08
 

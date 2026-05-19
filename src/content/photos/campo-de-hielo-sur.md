@@ -9,6 +9,9 @@ location:
   city: "Campo de Hielo Patagónico Sur"
   region: "Magallanes y de la Antártica Chilena"
   country: "Chile"
+coords:
+  lat: -49.5
+  lng: -73.5
 
 date_taken: 2025-12-20
 

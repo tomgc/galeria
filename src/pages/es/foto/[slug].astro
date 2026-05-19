@@ -1,5 +1,4 @@
 ---
-import { getImage } from 'astro:assets';
 import type { GetStaticPaths } from 'astro';
 import BaseLayout from '../../../layouts/BaseLayout.astro';
 import PhotoDetail from '../../../components/PhotoDetail.astro';
@@ -19,14 +18,10 @@ const title = data.title_es;
 const description = data.description_es ||
   `${title}${data.species_common_es ? ' — ' + data.species_common_es : ''}${data.location.city ? ', ' + data.location.city : ''}.`;
 
-// og:image (1600px JPEG) para compartir en redes
-const ogImg = await getImage({
-  src: data.image,
-  format: 'jpg',
-  width: Math.min(1600, data.image.width),
-});
+// og:image dinámico: /og/[slug].jpg con título + brand overlay (1200×630)
+const ogImagePath = `${import.meta.env.BASE_URL}og/${photo.id}.jpg`;
 ---
 
-<BaseLayout locale="es" title={title} description={description} ogImage={ogImg.src}>
+<BaseLayout locale="es" title={title} description={description} ogImage={ogImagePath}>
   <PhotoDetail photo={photo} all={all} locale="es" />
 </BaseLayout>

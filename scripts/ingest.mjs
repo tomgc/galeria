@@ -119,7 +119,7 @@ async function processOne(filename) {
   // EXIF
   let exif = {};
   try {
-    exif = (await exifr.parse(srcPath, { tiff: true, ifd0: true, exif: true, gps: false })) || {};
+    exif = (await exifr.parse(srcPath, { tiff: true, ifd0: true, exif: true, gps: true })) || {};
   } catch (err) {
     console.warn(`  ⚠ No se pudo leer EXIF de ${filename}: ${err.message}`);
   }
@@ -227,6 +227,12 @@ function buildFrontmatter(slug, exif) {
   const iso = exif?.ISO ?? '';
   const focal = formatFocal(exif?.FocalLength) ?? '';
 
+  // GPS de EXIF — exifr lo entrega como latitude/longitude decimales
+  const coordsBlock =
+    typeof exif?.latitude === 'number' && typeof exif?.longitude === 'number'
+      ? `\ncoords:\n  lat: ${exif.latitude.toFixed(6)}\n  lng: ${exif.longitude.toFixed(6)}\n`
+      : '';
+
   return `---
 # COMPLETAR: title_es (placeholder generado del slug), category, tags, location, description_es
 title_es: "${title}"
@@ -244,7 +250,7 @@ location:
   city: ""
   region: ""
   country: "Chile"
-
+${coordsBlock}
 date_taken: ${dateIso}
 
 camera:

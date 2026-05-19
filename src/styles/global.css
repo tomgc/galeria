@@ -120,6 +120,13 @@ img {
   height: auto;
 }
 
+/* Leaflet usa images con tamaños propios (tiles, markers); restablecer
+   los defaults de img dentro del contenedor del mapa. */
+.leaflet-container img {
+  max-width: none;
+  height: revert;
+}
+
 /* Foco accesible */
 :focus-visible {
   outline: 2px solid var(--accent);

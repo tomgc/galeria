@@ -30,8 +30,32 @@ const { gallerySelector } = Astro.props;
         padding: { top: 24, bottom: 24, left: 12, right: 12 },
       });
 
-      // Botón "Ver detalles" — navega a la página de detalle de la foto.
+      let autoplayTimer: ReturnType<typeof setInterval> | null = null;
+      const AUTOPLAY_MS = 4000;
+
       lightbox.on('uiRegister', () => {
+        // Botón autoplay (slideshow)
+        lightbox.pswp?.ui?.registerElement({
+          name: 'autoplay',
+          order: 7,
+          isButton: true,
+          html: '▶',
+          ariaLabel: 'Reproducir slideshow',
+          onClick: (_e, el, pswp) => {
+            if (autoplayTimer) {
+              clearInterval(autoplayTimer);
+              autoplayTimer = null;
+              el.innerHTML = '▶';
+              el.setAttribute('aria-label', 'Reproducir slideshow');
+            } else {
+              autoplayTimer = setInterval(() => pswp.next(), AUTOPLAY_MS);
+              el.innerHTML = '⏸';
+              el.setAttribute('aria-label', 'Pausar slideshow');
+            }
+          },
+        });
+
+        // Botón "Ver detalles" — navega a la página de detalle de la foto.
         lightbox.pswp?.ui?.registerElement({
           name: 'detail-link',
           order: 9,
@@ -42,6 +66,14 @@ const { gallerySelector } = Astro.props;
             if (href) window.location.href = href;
           },
         });
+      });
+
+      // Detener autoplay al cerrar el lightbox para no dejar timers colgando.
+      lightbox.on('close', () => {
+        if (autoplayTimer) {
+          clearInterval(autoplayTimer);
+          autoplayTimer = null;
+        }
       });
 
       lightbox.init();

@@ -1,0 +1,204 @@
+---
+import { getImage } from 'astro:assets';
+import type { Photo } from '../lib/photos';
+import type { Locale } from '../i18n';
+
+interface Props {
+  photos: Photo[];
+  locale: Locale;
+}
+
+const { photos, locale } = Astro.props;
+const base = import.meta.env.BASE_URL.replace(/\/$/, '');
+
+// Solo fotos con coordenadas
+const located = photos.filter((p) => p.data.coords);
+
+// Generar thumbnails pequeños para los popups (200px, JPEG)
+const markers = await Promise.all(
+  located.map(async (p) => {
+    const thumb = await getImage({
+      src: p.data.image,
+      format: 'jpg',
+      width: 240,
+    });
+    const title = locale === 'es' ? p.data.title_es : p.data.title_en || p.data.title_es;
+    return {
+      slug: p.id,
+      title,
+      lat: p.data.coords!.lat,
+      lng: p.data.coords!.lng,
+      thumbUrl: thumb.src,
+      detailUrl: `${base}/${locale}/foto/${p.id}/`,
+      city: p.data.location.city,
+      region: p.data.location.region,
+      category: p.data.category,
+    };
+  }),
+);
+
+const markersJson = JSON.stringify(markers);
+const emptyLabel = locale === 'es'
+  ? 'Aún no hay fotografías con coordenadas para mostrar en el mapa.'
+  : 'No photographs with coordinates available yet to plot on the map.';
+---
+
+{markers.length === 0 ? (
+  <div class="map-empty">
+    <p>{emptyLabel}</p>
+  </div>
+) : (
+  <div id="photo-map" class="photo-map" data-markers={markersJson} role="application" aria-label={locale === 'es' ? 'Mapa de ubicaciones de las fotografías' : 'Map of photograph locations'} />
+)}
+
+<style>
+  .photo-map {
+    width: 100%;
+    height: clamp(360px, 70vh, 720px);
+    border-radius: var(--radius);
+    background: var(--bg-elev);
+    border: 1px solid var(--border);
+    overflow: hidden;
+  }
+  .map-empty {
+    padding: 40px;
+    text-align: center;
+    color: var(--fg-muted);
+    border: 1px dashed var(--border);
+    border-radius: var(--radius);
+  }
+
+  /* Estilos del popup de Leaflet */
+  :global(.leaflet-popup-content-wrapper) {
+    background: var(--bg-elev);
+    color: var(--fg);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+  }
+  :global(.leaflet-popup-tip) {
+    background: var(--bg-elev);
+  }
+  :global(.leaflet-popup-content) {
+    margin: 8px 10px 10px;
+    line-height: 1.4;
+  }
+  :global(.leaflet-container) {
+    background: var(--bg-elev);
+    font-family: var(--font-sans);
+  }
+  :global(.map-popup-thumb) {
+    display: block;
+    width: 220px;
+    max-width: 220px;
+    height: auto;
+    border-radius: 2px;
+    margin-bottom: 6px;
+  }
+  :global(.map-popup-title) {
+    display: block;
+    font-family: var(--font-serif);
+    font-size: 1rem;
+    color: var(--fg);
+    border: 0;
+    margin-bottom: 4px;
+  }
+  :global(.map-popup-loc) {
+    font-size: 0.78rem;
+    color: var(--fg-muted);
+    margin: 0;
+  }
+</style>
+
+<script>
+  // Carga Leaflet sólo si el div del mapa existe en la página.
+  import L from 'leaflet';
+  import 'leaflet/dist/leaflet.css';
+
+  // Iconos: Leaflet por defecto referencia URLs absolutas que no existen
+  // tras el bundling. Vite resuelve estos imports como URLs.
+  import iconUrl from 'leaflet/dist/images/marker-icon.png';
+  import iconRetinaUrl from 'leaflet/dist/images/marker-icon-2x.png';
+  import shadowUrl from 'leaflet/dist/images/marker-shadow.png';
+
+  // Eliminar el getter por defecto que Leaflet usa para construir las URLs
+  // y mergear los iconos con las URLs ya resueltas por Vite.
+  // Importante: en DEV Vite devuelve un objeto { src }, en BUILD un string.
+  // Normalizamos a string antes de pasárselo a Leaflet.
+  const toUrl = (v: unknown): string => {
+    if (typeof v === 'string') return v;
+    if (v && typeof v === 'object' && 'src' in (v as Record<string, unknown>)) {
+      return String((v as { src: string }).src);
+    }
+    if (v && typeof v === 'object' && 'default' in (v as Record<string, unknown>)) {
+      return String((v as { default: string }).default);
+    }
+    return '';
+  };
+
+  delete (L.Icon.Default.prototype as any)._getIconUrl;
+  L.Icon.Default.mergeOptions({
+    iconUrl: toUrl(iconUrl),
+    iconRetinaUrl: toUrl(iconRetinaUrl),
+    shadowUrl: toUrl(shadowUrl),
+  });
+
+  type Marker = {
+    slug: string;
+    title: string;
+    lat: number;
+    lng: number;
+    thumbUrl: string;
+    detailUrl: string;
+    city?: string;
+    region?: string;
+    category: 'aves' | 'paisajes';
+  };
+
+  function initMap() {
+    const el = document.getElementById('photo-map') as HTMLElement | null;
+    if (!el) return;
+    const markers: Marker[] = JSON.parse(el.dataset.markers || '[]');
+    if (markers.length === 0) return;
+
+    const map = L.map(el, { scrollWheelZoom: false });
+
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution:
+        '© <a href="https://www.openstreetmap.org/copyright" rel="noopener" target="_blank">OpenStreetMap</a>',
+      maxZoom: 18,
+    }).addTo(map);
+
+    const group = L.featureGroup();
+    for (const m of markers) {
+      const marker = L.marker([m.lat, m.lng]);
+      const locText = [m.city, m.region].filter(Boolean).join(', ');
+      const popupHtml = `
+        <a href="${m.detailUrl}" style="display:block; border:0;">
+          <img src="${m.thumbUrl}" alt="${m.title}" class="map-popup-thumb" loading="lazy" />
+          <span class="map-popup-title">${m.title}</span>
+        </a>
+        ${locText ? `<p class="map-popup-loc">${locText}</p>` : ''}
+      `;
+      marker.bindPopup(popupHtml, { maxWidth: 240 });
+      marker.addTo(group);
+    }
+    group.addTo(map);
+
+    // Encuadre que cubre todos los markers, con padding
+    if (markers.length === 1) {
+      map.setView([markers[0].lat, markers[0].lng], 8);
+    } else {
+      map.fitBounds(group.getBounds(), { padding: [40, 40] });
+    }
+
+    // Habilita scroll-zoom sólo después de interacción explícita (UX común)
+    map.once('click', () => map.scrollWheelZoom.enable());
+    map.once('focus', () => map.scrollWheelZoom.enable());
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initMap);
+  } else {
+    initMap();
+  }
+</script>

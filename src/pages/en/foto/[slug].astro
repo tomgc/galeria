@@ -1,5 +1,4 @@
 ---
-import { getImage } from 'astro:assets';
 import type { GetStaticPaths } from 'astro';
 import BaseLayout from '../../../layouts/BaseLayout.astro';
 import PhotoDetail from '../../../components/PhotoDetail.astro';
@@ -19,13 +18,10 @@ const title = data.title_en || data.title_es;
 const description = data.description_en || data.description_es ||
   `${title}${data.species_common_en ? ' — ' + data.species_common_en : ''}${data.location.city ? ', ' + data.location.city : ''}.`;
 
-const ogImg = await getImage({
-  src: data.image,
-  format: 'jpg',
-  width: Math.min(1600, data.image.width),
-});
+// og:image dinámico
+const ogImagePath = `${import.meta.env.BASE_URL}og/${photo.id}.jpg`;
 ---
 
-<BaseLayout locale="en" title={title} description={description} ogImage={ogImg.src}>
+<BaseLayout locale="en" title={title} description={description} ogImage={ogImagePath}>
   <PhotoDetail photo={photo} all={all} locale="en" />
 </BaseLayout>
