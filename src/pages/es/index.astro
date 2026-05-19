@@ -1,13 +1,23 @@
 ---
 import BaseLayout from '../../layouts/BaseLayout.astro';
+import Hero from '../../components/Hero.astro';
 import Gallery from '../../components/Gallery.astro';
+import Lightbox from '../../components/Lightbox.astro';
 import { getAllPhotos } from '../../lib/photos';
 import { useTranslations } from '../../i18n';
 
 const t = useTranslations('es');
 const all = await getAllPhotos();
 const featured = all.filter((p) => p.data.featured);
-const photos = featured.length > 0 ? featured : all.slice(0, 12);
+
+// Si hay featured: primera = hero, resto + recientes no-featured = grid
+// Si no hay featured: solo las 12 más recientes en grid (sin hero)
+const hero = featured[0] ?? null;
+const gridPhotos = hero
+  ? [...featured.slice(1), ...all.filter((p) => !p.data.featured)].slice(0, 11)
+  : all.slice(0, 12);
+
+const heroGalleryId = 'hero-gallery';
 ---
 
 <BaseLayout locale="es" title="Portada">
@@ -19,12 +29,21 @@ const photos = featured.length > 0 ? featured : all.slice(0, 12);
     </p>
   </section>
 
-  <Gallery photos={photos} locale="es" eagerCount={4} />
+  {hero && (
+    <div id={heroGalleryId}>
+      <Hero photo={hero} locale="es" />
+      <Lightbox gallerySelector={`#${heroGalleryId}`} />
+    </div>
+  )}
+
+  {gridPhotos.length > 0 && (
+    <Gallery photos={gridPhotos} locale="es" eagerCount={hero ? 2 : 4} />
+  )}
 </BaseLayout>
 
 <style>
   .intro {
-    margin-bottom: 40px;
+    margin-bottom: 32px;
     max-width: 70ch;
   }
   .lead {

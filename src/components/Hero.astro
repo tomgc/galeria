@@ -1,0 +1,153 @@
+---
+import { Picture, getImage } from 'astro:assets';
+import type { CollectionEntry } from 'astro:content';
+import type { Locale } from '../i18n';
+
+interface Props {
+  photo: CollectionEntry<'photos'>;
+  locale: Locale;
+}
+
+const { photo, locale } = Astro.props;
+const data = photo.data;
+const base = import.meta.env.BASE_URL.replace(/\/$/, '');
+
+const title = locale === 'es' ? data.title_es : data.title_en || data.title_es;
+const description = locale === 'es' ? data.description_es : data.description_en || data.description_es;
+const detailHref = `${base}/${locale}/foto/${photo.id}/`;
+
+// Versión grande para el lightbox
+const fullImg = await getImage({
+  src: data.image,
+  format: 'webp',
+  width: Math.min(2400, data.image.width),
+});
+
+const ratio = data.image.width / data.image.height;
+const aspectRatio = `${data.image.width} / ${data.image.height}`;
+---
+
+<figure class="hero">
+  <a
+    class="hero-thumb"
+    href={fullImg.src}
+    data-pswp-width={fullImg.attributes.width ?? data.image.width}
+    data-pswp-height={fullImg.attributes.height ?? data.image.height}
+    data-detail={detailHref}
+    aria-label={title}
+    style={`--ratio: ${aspectRatio};`}
+  >
+    <Picture
+      src={data.image}
+      formats={['avif', 'webp']}
+      widths={[800, 1600, 2400]}
+      sizes="(min-width: 1440px) 1400px, 100vw"
+      alt={title}
+      loading="eager"
+      decoding="async"
+      class="hero-photo"
+      draggable={false}
+    />
+    <div class="hero-overlay">
+      <div class="hero-text">
+        <h2 class="hero-title">{title}</h2>
+        {description && <p class="hero-desc">{description}</p>}
+        <span class="hero-cta">
+          {locale === 'es' ? 'Ver detalles' : 'View details'} →
+        </span>
+      </div>
+    </div>
+  </a>
+</figure>
+
+<style>
+  .hero {
+    margin: 0 0 var(--gap);
+    position: relative;
+  }
+  .hero-thumb {
+    display: block;
+    border: 0;
+    position: relative;
+    overflow: hidden;
+    background: var(--bg-elev);
+    border-radius: var(--radius);
+    aspect-ratio: var(--ratio);
+    /* Limitar altura máxima para que ratios muy verticales no exploten en alto */
+    max-height: 78vh;
+  }
+  .hero-photo {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 600ms ease;
+  }
+  .hero:hover .hero-photo {
+    transform: scale(1.02);
+  }
+
+  .hero-overlay {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: flex-end;
+    padding: clamp(20px, 4vw, 48px);
+    /* Gradiente que oscurece la parte inferior para legibilidad del texto */
+    background: linear-gradient(
+      to top,
+      rgba(0, 0, 0, 0.7) 0%,
+      rgba(0, 0, 0, 0.35) 35%,
+      rgba(0, 0, 0, 0) 60%
+    );
+    color: #f4f1ea;
+    pointer-events: none;
+  }
+  .hero-text {
+    max-width: 60ch;
+    pointer-events: auto;
+  }
+  .hero-title {
+    font-family: var(--font-serif);
+    font-size: clamp(1.6rem, 4vw, 2.6rem);
+    line-height: 1.15;
+    margin: 0 0 8px;
+    color: inherit;
+    text-shadow: 0 2px 12px rgba(0, 0, 0, 0.5);
+  }
+  .hero-desc {
+    margin: 0 0 10px;
+    font-size: clamp(0.9rem, 1.5vw, 1rem);
+    line-height: 1.5;
+    color: rgba(244, 241, 234, 0.92);
+    max-width: 55ch;
+    text-shadow: 0 1px 6px rgba(0, 0, 0, 0.5);
+  }
+  .hero-cta {
+    display: inline-block;
+    font-size: 0.85rem;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    padding: 6px 14px;
+    border: 1px solid rgba(244, 241, 234, 0.6);
+    border-radius: 999px;
+    transition: background-color var(--transition), border-color var(--transition);
+  }
+  .hero:hover .hero-cta {
+    background: rgba(244, 241, 234, 0.15);
+    border-color: rgba(244, 241, 234, 1);
+  }
+
+  /* En mobile, panorámicas extremas resultan en imágenes muy bajas (375px / 3.5 ≈ 107px).
+     Imponemos min-height para que el overlay quepa; la imagen se recorta con
+     object-fit: cover. Trade-off aceptado: a 375px, la panorámica completa
+     pierde impacto, mejor recortar y dejar texto legible. */
+  @media (max-width: 640px) {
+    .hero-thumb {
+      max-height: 70vh;
+      min-height: 280px;
+    }
+    .hero-overlay { padding: 16px; }
+    .hero-title { font-size: 1.4rem; }
+    .hero-desc { display: none; }
+  }
+</style>

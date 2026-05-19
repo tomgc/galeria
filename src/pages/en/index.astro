@@ -1,11 +1,19 @@
 ---
 import BaseLayout from '../../layouts/BaseLayout.astro';
+import Hero from '../../components/Hero.astro';
 import Gallery from '../../components/Gallery.astro';
+import Lightbox from '../../components/Lightbox.astro';
 import { getAllPhotos } from '../../lib/photos';
 
 const all = await getAllPhotos();
 const featured = all.filter((p) => p.data.featured);
-const photos = featured.length > 0 ? featured : all.slice(0, 12);
+
+const hero = featured[0] ?? null;
+const gridPhotos = hero
+  ? [...featured.slice(1), ...all.filter((p) => !p.data.featured)].slice(0, 11)
+  : all.slice(0, 12);
+
+const heroGalleryId = 'hero-gallery-en';
 ---
 
 <BaseLayout locale="en" title="Home">
@@ -21,11 +29,20 @@ const photos = featured.length > 0 ? featured : all.slice(0, 12);
     </p>
   </section>
 
-  <Gallery photos={photos} locale="en" />
+  {hero && (
+    <div id={heroGalleryId}>
+      <Hero photo={hero} locale="en" />
+      <Lightbox gallerySelector={`#${heroGalleryId}`} />
+    </div>
+  )}
+
+  {gridPhotos.length > 0 && (
+    <Gallery photos={gridPhotos} locale="en" eagerCount={hero ? 2 : 4} />
+  )}
 </BaseLayout>
 
 <style>
-  .intro { margin-bottom: 40px; max-width: 70ch; }
+  .intro { margin-bottom: 32px; max-width: 70ch; }
   .lead { font-size: 1.1rem; color: var(--fg-muted); margin: 0 0 12px; }
   .note { font-size: 0.85rem; color: var(--fg-muted); }
 </style>
