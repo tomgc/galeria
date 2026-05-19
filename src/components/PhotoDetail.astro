@@ -95,6 +95,8 @@ const breadcrumbLd = {
 // Etiquetas localizadas
 const speciesLabel = locale === 'es' ? 'Especie' : 'Species';
 const zoomLabel = locale === 'es' ? 'Ver en pantalla completa' : 'View full screen';
+const shareLabel = locale === 'es' ? 'Compartir' : 'Share';
+const shareCopiedLabel = locale === 'es' ? 'Enlace copiado' : 'Link copied';
 
 // Etiquetas para sección/aria
 const navLabel = locale === 'es' ? 'Navegación entre fotografías' : 'Photograph navigation';
@@ -108,7 +110,27 @@ const navLabel = locale === 'es' ? 'Navegación entre fotografías' : 'Photograp
 
 <article class="photo-detail">
   <header class="head">
-    <h1>{title}</h1>
+    <div class="head-row">
+      <h1>{title}</h1>
+      <button
+        type="button"
+        class="share-btn"
+        data-share-title={title}
+        data-share-text={description}
+        data-share-copied={shareCopiedLabel}
+        aria-label={shareLabel}
+      >
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+             stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <circle cx="18" cy="5" r="3"/>
+          <circle cx="6" cy="12" r="3"/>
+          <circle cx="18" cy="19" r="3"/>
+          <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/>
+          <line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/>
+        </svg>
+        <span class="share-label">{shareLabel}</span>
+      </button>
+    </div>
     <p class="byline">{t('photo.author_line')}</p>
   </header>
 
@@ -231,13 +253,71 @@ const navLabel = locale === 'es' ? 'Navegación entre fotografías' : 'Photograp
   } else {
     initDetailLightbox();
   }
+
+  // Botón compartir: usa Web Share API si está disponible (mobile mayormente)
+  // o copia el link al portapapeles como fallback en desktop.
+  function initShareButton() {
+    const btn = document.querySelector<HTMLButtonElement>('.share-btn');
+    if (!btn) return;
+    btn.addEventListener('click', async () => {
+      const url = window.location.href;
+      const title = btn.dataset.shareTitle || document.title;
+      const text = btn.dataset.shareText || '';
+      const copiedMsg = btn.dataset.shareCopied || 'Copied';
+
+      if (navigator.share) {
+        try {
+          await navigator.share({ title, text, url });
+          return;
+        } catch (e) { /* user canceled — sin acción */ }
+      }
+
+      // Fallback: copiar al portapapeles
+      try {
+        await navigator.clipboard.writeText(url);
+        const original = btn.querySelector('.share-label')?.textContent;
+        const labelEl = btn.querySelector('.share-label');
+        if (labelEl) {
+          labelEl.textContent = copiedMsg;
+          setTimeout(() => { labelEl.textContent = original || ''; }, 1800);
+        }
+      } catch (e) { /* clipboard no disponible — sin acción */ }
+    });
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initShareButton);
+  } else {
+    initShareButton();
+  }
 </script>
 
 <style>
   .photo-detail { max-width: 1400px; margin-inline: auto; }
   .head { margin-bottom: 24px; }
-  .head h1 { margin-bottom: 4px; }
+  .head-row {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 16px;
+  }
+  .head h1 { margin-bottom: 4px; flex: 1; }
   .byline { color: var(--fg-muted); font-size: 0.9rem; margin: 0; }
+
+  .share-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    margin-top: 8px;
+    padding: 6px 12px;
+    font-size: 0.85rem;
+    color: var(--fg-muted);
+  }
+  .share-btn:hover { color: var(--fg); }
+  .share-btn svg { display: block; }
+  @media (max-width: 480px) {
+    .share-btn .share-label { display: none; }
+  }
   .hero { margin: 0 0 24px; position: relative; }
   .photo { width: 100%; height: auto; background: var(--bg-elev); border-radius: var(--radius); }
   .zoom {

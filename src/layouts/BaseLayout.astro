@@ -54,6 +54,14 @@ const ogImageURL = ogImage ? new URL(ogImage, Astro.site).toString() : undefined
 
     <link rel="icon" type="image/svg+xml" href={`${import.meta.env.BASE_URL}favicon.svg`} />
 
+    <!-- RSS feed discovery -->
+    <link
+      rel="alternate"
+      type="application/rss+xml"
+      title="Tomás González Cifuentes — Fotografía de naturaleza"
+      href={`${import.meta.env.BASE_URL}rss.xml`}
+    />
+
     <!-- Open Graph -->
     <meta property="og:type" content="website" />
     <meta property="og:title" content={fullTitle} />
