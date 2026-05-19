@@ -42,6 +42,18 @@ const dateLocale = new Date(data.date_taken).toLocaleDateString('es-CL', {
   year: 'numeric', month: 'long', day: 'numeric',
 });
 
+// Breadcrumb: Portada > Aves|Paisajes > Foto
+const categoryLabel = data.category === 'aves' ? 'Aves' : 'Paisajes';
+const breadcrumbLd = {
+  '@context': 'https://schema.org',
+  '@type': 'BreadcrumbList',
+  itemListElement: [
+    { '@type': 'ListItem', position: 1, name: 'Portada', item: `${Astro.site}es/` },
+    { '@type': 'ListItem', position: 2, name: categoryLabel, item: `${Astro.site}es/${data.category}/` },
+    { '@type': 'ListItem', position: 3, name: title },
+  ],
+};
+
 // JSON-LD ImageObject
 const jsonLd = {
   '@context': 'https://schema.org',
@@ -73,6 +85,7 @@ const jsonLd = {
 <BaseLayout locale="es" title={title} description={description} ogImage={ogImg.src}>
   <Fragment slot="head">
     <script type="application/ld+json" set:html={JSON.stringify(jsonLd)} />
+    <script type="application/ld+json" set:html={JSON.stringify(breadcrumbLd)} />
   </Fragment>
 
   <article class="photo-detail">

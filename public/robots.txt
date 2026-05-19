@@ -84,3 +84,4 @@ Disallow: /
 
 # --- Sitemap ---
 Sitemap: https://tomgc.github.io/galeria/sitemap-index.xml
+Sitemap: https://tomgc.github.io/galeria/sitemap-images.xml

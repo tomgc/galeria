@@ -1,5 +1,21 @@
 ---
 import BaseLayout from '../../layouts/BaseLayout.astro';
+
+// Schema.org Person para que Google entienda la entidad detrás del sitio
+const personLd = {
+  '@context': 'https://schema.org',
+  '@type': 'Person',
+  name: 'Tomás González Cifuentes',
+  url: `${Astro.site}es/sobre-mi/`,
+  jobTitle: 'Fotógrafo de naturaleza',
+  description: 'Fotógrafo de naturaleza chileno especializado en aves y paisajes del sur de Chile y la Patagonia.',
+  nationality: 'Chilean',
+  knowsAbout: ['Bird photography', 'Landscape photography', 'Patagonia', 'Chilean wildlife'],
+  workLocation: {
+    '@type': 'Country',
+    name: 'Chile',
+  },
+};
 ---
 
 <BaseLayout
@@ -7,6 +23,10 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
   title="Sobre mí"
   description="Tomás González Cifuentes — fotógrafo de naturaleza, basado en Chile."
 >
+  <Fragment slot="head">
+    <script type="application/ld+json" set:html={JSON.stringify(personLd)} />
+  </Fragment>
+
   <article class="about">
     <h1>Sobre mí</h1>
 
