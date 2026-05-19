@@ -174,13 +174,12 @@ const jsonLd = {
   </article>
 
   <script>
-    (async () => {
+    import PhotoSwipeLightbox from 'photoswipe/lightbox';
+    import 'photoswipe/style.css';
+
+    function initDetailLightbox() {
       const link = document.querySelector('.zoom[data-pswp-width]');
       if (!link) return;
-      const [{ default: PhotoSwipeLightbox }] = await Promise.all([
-        import('photoswipe/lightbox'),
-        import('photoswipe/style.css'),
-      ]);
       const lightbox = new PhotoSwipeLightbox({
         gallery: '.hero',
         children: 'a.zoom',
@@ -188,7 +187,13 @@ const jsonLd = {
         bgOpacity: 0.95,
       });
       lightbox.init();
-    })();
+    }
+
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', initDetailLightbox);
+    } else {
+      initDetailLightbox();
+    }
   </script>
 </BaseLayout>
 

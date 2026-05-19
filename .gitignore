@@ -29,3 +29,4 @@ pnpm-debug.log*
 # fotos sin procesar (no se versionan; se procesan con scripts/ingest.mjs)
 _inbox/*
 !_inbox/.gitkeep
+lighthouse-report.json
