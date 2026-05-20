@@ -125,6 +125,10 @@ const heroFull = hero ? await getImage({
       }
       .site-nav a { transition: color 160ms ease; }
       .site-nav a:hover, .site-nav a.active { color: var(--fg); }
+      /* Compensa el letter-spacing trailing del último item: sin esto el bloque
+         entero queda visualmente corrido ~0.09em a la izquierda porque el
+         margin auto incluye el espacio invisible posterior a "CONTACTO". */
+      .site-nav a:last-child { margin-inline-end: -0.18em; }
 
       /* Toggles fijos arriba a la derecha */
       .toggles {
