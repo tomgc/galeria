@@ -209,22 +209,29 @@ const heroFull = hero ? await getImage({
         line-height: 1.55;
       }
 
+      /* Meta row: título + toggle [+] siempre en una línea (alineados a
+         baseline). Ubicación va debajo como subtítulo, sin importar su largo.
+         Esto previene wrapping incoherente entre cards con places cortos
+         (Pucón) y places largos (Parque Nacional Torres del Paine...). */
       .photo-meta {
         margin-top: 16px;
-        display: flex;
+        display: grid;
+        grid-template-columns: 1fr auto;
+        gap: 4px 16px;
         align-items: baseline;
-        gap: 16px;
-        flex-wrap: wrap;
       }
       .photo-title {
-        flex: 1 1 auto;
+        grid-column: 1;
+        grid-row: 1;
         font-weight: 400;
         font-size: clamp(0.95rem, 1.6vw, 1.1rem);
         margin: 0;
-        line-height: 1.4;
+        line-height: 1.3;
         letter-spacing: -0.005em;
       }
       .photo-place {
+        grid-column: 1 / -1;
+        grid-row: 2;
         font-size: 12px;
         letter-spacing: 0.04em;
         color: var(--fg-muted);
@@ -233,6 +240,8 @@ const heroFull = hero ? await getImage({
          centrado al pixel. Vertical bar encoge a scaleY(0) cuando se abre,
          dejando sólo la horizontal: visualmente + → − semánticamente correcto. */
       .info-btn {
+        grid-column: 2;
+        grid-row: 1;
         width: 28px;
         height: 28px;
         background: transparent;
@@ -244,6 +253,7 @@ const heroFull = hero ? await getImage({
         color: var(--fg-faint);
         cursor: pointer;
         transition: color 160ms ease;
+        justify-self: end;
       }
       .info-btn:hover { color: var(--fg); }
       .info-btn svg { display: block; overflow: visible; }
