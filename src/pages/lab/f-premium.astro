@@ -228,24 +228,21 @@ const heroFull = hero ? await getImage({
       .info-btn {
         background: transparent;
         border: 0;
-        padding: 4px 0;
-        font: 500 11px/1 'Inter', sans-serif;
-        letter-spacing: 0.18em;
-        text-transform: uppercase;
+        padding: 4px 8px;
+        margin: -4px -8px;            /* extiende área clickeable sin agregar peso visual */
+        font: 500 14px/1 'JetBrains Mono', ui-monospace, monospace;
         color: var(--fg-faint);
         cursor: pointer;
         white-space: nowrap;
         transition: color 160ms ease;
       }
       .info-btn:hover { color: var(--fg); }
-      .info-btn::after {
-        content: ' ↓';
+      .info-btn::before {
+        content: '[+]';
         display: inline-block;
-        margin-left: 4px;
-        transition: transform 200ms ease;
       }
-      .photo-card[data-info-open='true'] .info-btn::after {
-        transform: rotate(180deg);
+      .photo-card[data-info-open='true'] .info-btn::before {
+        content: '[−]';
       }
 
       /* Panel de información técnica colapsable */
@@ -376,7 +373,7 @@ const heroFull = hero ? await getImage({
             <span class="photo-place">
               {[hero.data.location.city, hero.data.location.region].filter(Boolean).join(', ')}
             </span>
-            <button type="button" class="info-btn">Información técnica</button>
+            <button type="button" class="info-btn" aria-expanded="false" aria-label="Mostrar información técnica"></button>
           </div>
           <div class="photo-info">
             <div class="photo-info-inner">
@@ -428,7 +425,7 @@ const heroFull = hero ? await getImage({
             <div class="photo-meta">
               <h2 class="photo-title">{data.title_es}</h2>
               {place && <span class="photo-place">{place}</span>}
-              <button type="button" class="info-btn">Info</button>
+              <button type="button" class="info-btn" aria-expanded="false" aria-label="Mostrar información técnica"></button>
             </div>
             <div class="photo-info">
               <div class="photo-info-inner">
@@ -463,12 +460,15 @@ const heroFull = hero ? await getImage({
 
     <script>
       // Toggle del panel "información técnica" por foto
-      document.querySelectorAll('.info-btn').forEach((btn) => {
+      document.querySelectorAll<HTMLButtonElement>('.info-btn').forEach((btn) => {
         btn.addEventListener('click', () => {
-          const card = (btn as HTMLElement).closest<HTMLElement>('.photo-card');
+          const card = btn.closest<HTMLElement>('.photo-card');
           if (!card) return;
           const open = card.dataset.infoOpen === 'true';
           card.dataset.infoOpen = open ? 'false' : 'true';
+          btn.setAttribute('aria-expanded', String(!open));
+          btn.setAttribute('aria-label',
+            open ? 'Mostrar información técnica' : 'Ocultar información técnica');
         });
       });
 
