@@ -159,7 +159,9 @@ const heroFull = hero ? await getImage({
 
       /* ────── HERO ────── */
       .hero {
-        margin: clamp(48px, 7vw, 96px) auto;
+        /* Top tighter — el nav actúa como divisor, el hero debe respirar
+           pero no flotar lejos. Bottom más generoso para abrir paso al grid. */
+        margin: clamp(24px, 3vw, 48px) auto clamp(56px, 7vw, 96px);
         max-width: 1400px;
         padding: 0 24px;
       }
