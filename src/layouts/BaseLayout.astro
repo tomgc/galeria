@@ -76,16 +76,17 @@ const ogImageURL = ogImage ? new URL(ogImage, Astro.site).toString() : undefined
     <meta name="twitter:description" content={desc} />
     {ogImageURL && <meta name="twitter:image" content={ogImageURL} />}
 
-    <!-- Aplicar tema antes de pintar para evitar flash -->
+    <!-- Aplicar tema antes de pintar para evitar flash. Light por default
+         (no respeta prefers-color-scheme — el usuario alterna explícitamente). -->
     <script is:inline>
       (function () {
         try {
           var stored = localStorage.getItem('galeria-theme');
-          var theme = (stored === 'light' || stored === 'dark')
-            ? stored
-            : (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+          var theme = (stored === 'dark') ? 'dark' : 'light';
           document.documentElement.setAttribute('data-theme', theme);
-        } catch (e) { /* sin storage: usa default */ }
+        } catch (e) {
+          document.documentElement.setAttribute('data-theme', 'light');
+        }
       })();
     </script>
 

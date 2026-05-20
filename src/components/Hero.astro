@@ -15,27 +15,25 @@ const base = import.meta.env.BASE_URL.replace(/\/$/, '');
 const title = locale === 'es' ? data.title_es : data.title_en || data.title_es;
 const description = locale === 'es' ? data.description_es : data.description_en || data.description_es;
 const detailHref = `${base}/${locale}/foto/${photo.id}/`;
+const place = [data.location.city, data.location.region].filter(Boolean).join(', ');
 
-// Versión grande para el lightbox
 const fullImg = await getImage({
   src: data.image,
   format: 'webp',
   width: Math.min(2400, data.image.width),
 });
 
-const ratio = data.image.width / data.image.height;
 const aspectRatio = `${data.image.width} / ${data.image.height}`;
 ---
 
-<figure class="hero">
+<figure class="hero" data-info-open="false" style={`--ratio: ${aspectRatio};`}>
   <a
-    class="hero-thumb"
+    class="thumb"
     href={fullImg.src}
     data-pswp-width={fullImg.attributes.width ?? data.image.width}
     data-pswp-height={fullImg.attributes.height ?? data.image.height}
     data-detail={detailHref}
     aria-label={title}
-    style={`--ratio: ${aspectRatio};`}
   >
     <Picture
       src={data.image}
@@ -45,109 +43,241 @@ const aspectRatio = `${data.image.width} / ${data.image.height}`;
       alt={title}
       loading="eager"
       decoding="async"
-      class="hero-photo"
+      class="photo"
       draggable={false}
     />
-    <div class="hero-overlay">
-      <div class="hero-text">
-        <h2 class="hero-title">{title}</h2>
-        {description && <p class="hero-desc">{description}</p>}
-        <span class="hero-cta">
-          {locale === 'es' ? 'Ver detalles' : 'View details'} →
-        </span>
+    {description && (
+      <div class="overlay">
+        <p>{description}</p>
       </div>
-    </div>
+    )}
   </a>
+
+  <div class="meta">
+    <a class="title" href={detailHref}>{title}</a>
+    <button
+      type="button"
+      class="info-btn"
+      aria-expanded="false"
+      aria-label={locale === 'es' ? 'Mostrar información técnica' : 'Show technical information'}
+    >
+      <svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false">
+        <line x1="2" y1="7" x2="12" y2="7" />
+        <line class="v" x1="7" y1="2" x2="7" y2="12" />
+      </svg>
+    </button>
+    {place && <span class="place">{place}</span>}
+  </div>
+
+  <div class="info">
+    <div class="info-inner">
+      <dl>
+        {data.camera.model && (<><dt>{locale === 'es' ? 'Cámara' : 'Camera'}</dt><dd>{data.camera.model}</dd></>)}
+        {data.camera.lens && (<><dt>{locale === 'es' ? 'Objetivo' : 'Lens'}</dt><dd>{data.camera.lens}</dd></>)}
+        {data.exif.aperture && (<><dt>{locale === 'es' ? 'Apertura' : 'Aperture'}</dt><dd>{data.exif.aperture}</dd></>)}
+        {data.exif.shutter_speed && (<><dt>{locale === 'es' ? 'Obtur.' : 'Shutter'}</dt><dd>{data.exif.shutter_speed}</dd></>)}
+        {data.exif.iso && (<><dt>ISO</dt><dd>{data.exif.iso}</dd></>)}
+        {data.exif.focal_length && (<><dt>{locale === 'es' ? 'Focal' : 'Focal'}</dt><dd>{data.exif.focal_length}</dd></>)}
+        <dt>{locale === 'es' ? 'Fecha' : 'Date'}</dt>
+        <dd>{new Date(data.date_taken).toLocaleDateString(locale === 'es' ? 'es-CL' : 'en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</dd>
+        {data.coords && (<><dt>{locale === 'es' ? 'Coord.' : 'Coord.'}</dt><dd>{data.coords.lat.toFixed(3)}, {data.coords.lng.toFixed(3)}</dd></>)}
+      </dl>
+      {data.tags.length > 0 && (
+        <div class="info-tags">
+          {data.tags.map((tag) => (
+            <a class="info-tag" href={`${base}/${locale}/tags/${encodeURIComponent(tag)}/`}>{tag}</a>
+          ))}
+        </div>
+      )}
+    </div>
+  </div>
 </figure>
 
 <style>
   .hero {
-    margin: 0 0 var(--gap);
+    margin: clamp(24px, 3vw, 48px) 0 clamp(56px, 7vw, 96px);
     position: relative;
   }
-  .hero-thumb {
+  .thumb {
     display: block;
     border: 0;
-    position: relative;
     overflow: hidden;
     background: var(--bg-elev);
-    border-radius: var(--radius);
+    border: 1px solid var(--border);
     aspect-ratio: var(--ratio);
-    /* Limitar altura máxima para que ratios muy verticales no exploten en alto */
-    max-height: 78vh;
+    max-height: 80vh;
+    position: relative;
   }
-  .hero-photo {
+  .photo {
     width: 100%;
     height: 100%;
     object-fit: cover;
     transition: transform 600ms ease;
   }
-  .hero:hover .hero-photo {
-    transform: scale(1.02);
-  }
+  .hero:hover .photo { transform: scale(1.01); }
 
-  .hero-overlay {
+  .overlay {
     position: absolute;
-    inset: 0;
-    display: flex;
-    align-items: flex-end;
-    padding: clamp(20px, 4vw, 48px);
-    /* Gradiente que oscurece la parte inferior para legibilidad del texto */
-    background: linear-gradient(
-      to top,
-      rgba(0, 0, 0, 0.7) 0%,
-      rgba(0, 0, 0, 0.35) 35%,
-      rgba(0, 0, 0, 0) 60%
-    );
-    color: #f4f1ea;
+    inset-block-end: 0;
+    inset-inline: 0;
+    padding: clamp(24px, 4vw, 48px);
+    background: linear-gradient(transparent, var(--overlay));
+    color: var(--overlay-fg);
+    opacity: 0;
+    transform: translateY(8px);
+    transition: opacity 280ms ease, transform 280ms ease;
     pointer-events: none;
   }
-  .hero-text {
+  .hero:hover .overlay { opacity: 1; transform: translateY(0); }
+  @media (hover: none) {
+    .overlay { opacity: 1; transform: none; }
+  }
+  .overlay p {
+    margin: 0;
     max-width: 60ch;
-    pointer-events: auto;
-  }
-  .hero-title {
-    font-family: var(--font-serif);
-    font-size: clamp(1.6rem, 4vw, 2.6rem);
-    line-height: 1.15;
-    margin: 0 0 8px;
-    color: inherit;
-    text-shadow: 0 2px 12px rgba(0, 0, 0, 0.5);
-  }
-  .hero-desc {
-    margin: 0 0 10px;
-    font-size: clamp(0.9rem, 1.5vw, 1rem);
+    font-size: 0.95rem;
     line-height: 1.5;
-    color: rgba(244, 241, 234, 0.92);
-    max-width: 55ch;
-    text-shadow: 0 1px 6px rgba(0, 0, 0, 0.5);
-  }
-  .hero-cta {
-    display: inline-block;
-    font-size: 0.85rem;
-    letter-spacing: 0.06em;
-    text-transform: uppercase;
-    padding: 6px 14px;
-    border: 1px solid rgba(244, 241, 234, 0.6);
-    border-radius: 999px;
-    transition: background-color var(--transition), border-color var(--transition);
-  }
-  .hero:hover .hero-cta {
-    background: rgba(244, 241, 234, 0.15);
-    border-color: rgba(244, 241, 234, 1);
+    font-weight: 400;
   }
 
-  /* En mobile, panorámicas extremas resultan en imágenes muy bajas (375px / 3.5 ≈ 107px).
-     Imponemos min-height para que el overlay quepa; la imagen se recorta con
-     object-fit: cover. Trade-off aceptado: a 375px, la panorámica completa
-     pierde impacto, mejor recortar y dejar texto legible. */
-  @media (max-width: 640px) {
-    .hero-thumb {
-      max-height: 70vh;
-      min-height: 280px;
-    }
-    .hero-overlay { padding: 16px; }
-    .hero-title { font-size: 1.4rem; }
-    .hero-desc { display: none; }
+  .meta {
+    margin-top: 16px;
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 4px 16px;
+    align-items: baseline;
   }
+  .title {
+    grid-column: 1;
+    grid-row: 1;
+    border: 0;
+    color: inherit;
+    font-weight: 400;
+    font-size: clamp(1rem, 1.6vw, 1.15rem);
+    line-height: 1.3;
+    letter-spacing: -0.005em;
+  }
+  .title:hover { opacity: 0.7; }
+  .place {
+    grid-column: 1 / -1;
+    grid-row: 2;
+    font-size: 12px;
+    letter-spacing: 0.04em;
+    color: var(--fg-muted);
+  }
+
+  .info-btn {
+    grid-column: 2;
+    grid-row: 1;
+    justify-self: end;
+    width: 28px;
+    height: 28px;
+    background: transparent;
+    border: 0;
+    padding: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--fg-faint);
+    cursor: pointer;
+    transition: color 160ms ease;
+  }
+  .info-btn:hover { color: var(--fg); }
+  .info-btn svg { display: block; overflow: visible; }
+  .info-btn svg line {
+    stroke: currentColor;
+    stroke-width: 1.25;
+    stroke-linecap: square;
+  }
+  .info-btn svg .v {
+    transform-origin: center;
+    transition: transform 220ms ease;
+  }
+  .hero[data-info-open='true'] .info-btn svg .v { transform: scaleY(0); }
+
+  .info {
+    display: grid;
+    grid-template-rows: 0fr;
+    transition: grid-template-rows 280ms ease, margin-top 280ms ease;
+    margin-top: 0;
+  }
+  .hero[data-info-open='true'] .info {
+    grid-template-rows: 1fr;
+    margin-top: 16px;
+  }
+  .info-inner {
+    overflow: hidden;
+    border-top: 1px solid var(--border);
+    padding-top: 16px;
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+  @media (min-width: 720px) {
+    .info-inner { grid-template-columns: max-content 1fr; gap: 24px; }
+  }
+  .info-inner dl {
+    margin: 0;
+    font-family: var(--font-mono);
+    font-size: 11px;
+    line-height: 1.7;
+  }
+  .info-inner dt {
+    display: inline-block;
+    width: 110px;
+    color: var(--fg-faint);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    font-size: 10px;
+  }
+  .info-inner dd {
+    display: inline;
+    margin: 0;
+    color: var(--fg);
+  }
+  .info-inner dd::after { content: ''; display: block; }
+  .info-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    align-items: flex-start;
+  }
+  .info-tag {
+    padding: 3px 10px;
+    border: 1px solid var(--border);
+    font-size: 11px;
+    letter-spacing: 0.04em;
+    color: var(--fg-muted);
+  }
+  .info-tag:hover { color: var(--fg); opacity: 1; }
 </style>
+
+<script>
+  // Mismo handler que PhotoCard — al click toggle data-info-open + aria.
+  function setupHeroInfoToggle() {
+    document.querySelectorAll<HTMLButtonElement>('.hero .info-btn').forEach((btn) => {
+      if ((btn as any).__bound) return;
+      (btn as any).__bound = true;
+      btn.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        const fig = btn.closest<HTMLElement>('.hero');
+        if (!fig) return;
+        const open = fig.dataset.infoOpen === 'true';
+        fig.dataset.infoOpen = open ? 'false' : 'true';
+        btn.setAttribute('aria-expanded', String(!open));
+        const isEs = document.documentElement.lang === 'es';
+        btn.setAttribute('aria-label',
+          open
+            ? (isEs ? 'Mostrar información técnica' : 'Show technical information')
+            : (isEs ? 'Ocultar información técnica' : 'Hide technical information'));
+      });
+    });
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', setupHeroInfoToggle);
+  } else {
+    setupHeroInfoToggle();
+  }
+</script>

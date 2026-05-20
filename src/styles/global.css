@@ -1,50 +1,48 @@
-/* Reset mínimo y custom properties con tema claro/oscuro */
-@import '@fontsource/playfair-display/400.css';
-@import '@fontsource/playfair-display/700.css';
+/* Sistema de diseño — derivado de la variante F "Premium minimalista".
+   Light por defecto, dark via data-theme="dark" en <html>. */
+
+@import '@fontsource/inter/300.css';
+@import '@fontsource/inter/400.css';
+@import '@fontsource/inter/500.css';
+@import '@fontsource/inter/700.css';
+@import '@fontsource/jetbrains-mono/400.css';
+@import '@fontsource/jetbrains-mono/500.css';
 
 :root {
-  --font-sans: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-  --font-serif: 'Playfair Display', Georgia, 'Times New Roman', serif;
+  --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, 'SF Mono', Menlo, monospace;
 
   --maxw: 1400px;
   --gap: 12px;
   --gap-sm: 8px;
-  --radius: 2px;
-
+  --radius: 0px;          /* premium archival — bordes rectos */
   --transition: 180ms ease;
 }
 
+/* Light por defecto (sin :root[data-theme] específico = light) */
 :root,
 :root[data-theme='light'] {
-  --bg: #fafafa;
-  --bg-elev: #ffffff;
-  --fg: #1a1a1a;
-  --fg-muted: #595959;
-  --border: #e5e5e5;
-  --accent: #1a1a1a;
-  --shadow: 0 1px 2px rgba(0, 0, 0, 0.04), 0 4px 12px rgba(0, 0, 0, 0.04);
+  --bg: #ffffff;
+  --bg-elev: #fafafa;
+  --fg: #0a0a0a;
+  --fg-muted: #6a6a6a;
+  --fg-faint: #999999;
+  --border: #e8e8e8;
+  --overlay: rgba(0, 0, 0, 0.75);
+  --overlay-fg: #f5f3ee;
+  --shadow: none;
 }
 
 :root[data-theme='dark'] {
-  --bg: #0f0f0f;
+  --bg: #0a0a0a;
   --bg-elev: #181818;
-  --fg: #f4f1ea;
-  --fg-muted: #a8a39a;
+  --fg: #f2f0ec;
+  --fg-muted: #8a857c;
+  --fg-faint: #5a5550;
   --border: #2a2a2a;
-  --accent: #f4f1ea;
-  --shadow: 0 1px 2px rgba(0, 0, 0, 0.5), 0 4px 12px rgba(0, 0, 0, 0.4);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root:not([data-theme]) {
-    --bg: #0f0f0f;
-    --bg-elev: #181818;
-    --fg: #f4f1ea;
-    --fg-muted: #a8a39a;
-    --border: #2a2a2a;
-    --accent: #f4f1ea;
-    --shadow: 0 1px 2px rgba(0, 0, 0, 0.5), 0 4px 12px rgba(0, 0, 0, 0.4);
-  }
+  --overlay: rgba(0, 0, 0, 0.85);
+  --overlay-fg: #f5f3ee;
+  --shadow: none;
 }
 
 *,
@@ -57,6 +55,7 @@ html {
   background: var(--bg);
   color: var(--fg);
   font-family: var(--font-sans);
+  font-weight: 300;
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
 }
@@ -66,7 +65,7 @@ body {
   min-height: 100vh;
   display: flex;
   flex-direction: column;
-  line-height: 1.55;
+  line-height: 1.6;
   font-size: 16px;
   transition: background-color var(--transition), color var(--transition);
 }
@@ -76,22 +75,22 @@ main {
   width: 100%;
   max-width: var(--maxw);
   margin-inline: auto;
-  padding: clamp(24px, 5vw, 56px) clamp(16px, 4vw, 32px);
+  padding: clamp(32px, 5vw, 56px) clamp(20px, 4vw, 32px);
 }
 
 h1, h2, h3 {
-  font-family: var(--font-serif);
-  font-weight: 400;
-  letter-spacing: -0.01em;
-  line-height: 1.2;
+  font-family: var(--font-sans);
+  font-weight: 300;
+  letter-spacing: -0.015em;
+  line-height: 1.15;
   margin: 0 0 0.6em;
 }
 
-h1 { font-size: clamp(1.75rem, 4vw, 2.6rem); }
-h2 { font-size: clamp(1.3rem, 3vw, 1.8rem); }
-h3 { font-size: 1.15rem; }
+h1 { font-size: clamp(1.8rem, 4vw, 2.6rem); }
+h2 { font-size: clamp(1.3rem, 2.5vw, 1.6rem); }
+h3 { font-size: 1.05rem; }
 
-p { margin: 0 0 1em; max-width: 65ch; }
+p { margin: 0 0 1em; max-width: 65ch; line-height: 1.7; }
 
 a {
   color: inherit;
@@ -99,7 +98,7 @@ a {
   border-bottom: 1px solid currentColor;
   transition: opacity var(--transition);
 }
-a:hover { opacity: 0.65; }
+a:hover { opacity: 0.6; }
 
 button {
   font: inherit;
@@ -112,7 +111,7 @@ button {
   transition: background-color var(--transition), border-color var(--transition);
 }
 button:hover { background: var(--bg-elev); }
-button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+button:focus-visible { outline: 1px solid var(--fg); outline-offset: 2px; }
 
 img {
   display: block;
@@ -120,8 +119,7 @@ img {
   height: auto;
 }
 
-/* Leaflet usa images con tamaños propios (tiles, markers); restablecer
-   los defaults de img dentro del contenedor del mapa. */
+/* Leaflet usa images con tamaños propios; restablecemos defaults dentro del mapa. */
 .leaflet-container img {
   max-width: none;
   height: revert;
@@ -129,11 +127,10 @@ img {
 
 /* Foco accesible */
 :focus-visible {
-  outline: 2px solid var(--accent);
+  outline: 1px solid var(--fg);
   outline-offset: 3px;
 }
 
-/* Skip link para teclado/SR */
 .skip-link {
   position: absolute;
   inset-inline-start: 8px;
@@ -146,7 +143,6 @@ img {
 }
 .skip-link:focus { transform: none; }
 
-/* Utilidad: solo para lectores de pantalla */
 .sr-only {
   position: absolute;
   width: 1px;
@@ -159,7 +155,7 @@ img {
   border: 0;
 }
 
-/* Disuasión de descarga: las fotos no son seleccionables ni arrastrables */
+/* Disuasión de descarga */
 img.photo,
 img[data-photo] {
   user-select: none;

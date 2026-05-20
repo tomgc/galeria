@@ -26,129 +26,136 @@ const nav = [
 ---
 
 <header class="site-header">
-  <div class="bar">
+  <div class="brand-block">
     <a class="brand" href={`${base}/${locale}/`}>
       <span class="brand-name">Tomás González Cifuentes</span>
       <span class="brand-sub">{t('brand.subtitle')}</span>
     </a>
+  </div>
 
-    <nav aria-label="Principal">
-      <ul>
-        {nav.map((item) => (
-          <li>
-            <a
-              href={item.href}
-              aria-current={Astro.url.pathname === item.href ? 'page' : undefined}
-            >
-              {item.label}
-            </a>
-          </li>
-        ))}
-      </ul>
-    </nav>
+  <nav class="site-nav" aria-label="Principal">
+    {nav.map((item) => {
+      const isActive = Astro.url.pathname === item.href || Astro.url.pathname === item.href.replace(/\/$/, '');
+      return (
+        <a
+          href={item.href}
+          aria-current={isActive ? 'page' : undefined}
+          class:list={[{ active: isActive }]}
+        >
+          {item.label}
+        </a>
+      );
+    })}
+  </nav>
 
-    <div class="actions">
-      <a class="lang" href={otherLocaleHref} hreflang={otherLocale}>
-        {t('lang.switch')}
-      </a>
-      <button
-        type="button"
-        id="theme-toggle"
-        aria-label={t('theme.toggle')}
-        title={t('theme.toggle')}
-      >
-        <span class="theme-icon" aria-hidden="true">◐</span>
-      </button>
-    </div>
+  <div class="toggles">
+    <a class="toggle" href={otherLocaleHref} hreflang={otherLocale} aria-label={t('lang.switch')}>
+      {locale === 'es' ? 'ES / EN' : 'EN / ES'}
+    </a>
+    <button
+      type="button"
+      class="toggle toggle-theme"
+      id="theme-toggle"
+      aria-label={t('theme.toggle')}
+      title={t('theme.toggle')}
+    >
+      ◐
+    </button>
   </div>
 </header>
 
 <style>
   .site-header {
-    border-bottom: 1px solid var(--border);
-    background: var(--bg);
-    position: sticky;
-    top: 0;
-    z-index: 10;
-    backdrop-filter: saturate(180%) blur(8px);
+    text-align: center;
+    padding: clamp(48px, 7vw, 80px) 24px 0;
+    position: relative;
   }
 
-  .bar {
-    max-width: var(--maxw);
-    margin-inline: auto;
-    padding: 14px clamp(16px, 4vw, 32px);
-    display: grid;
-    grid-template-columns: auto 1fr auto;
-    align-items: center;
-    gap: 24px;
+  .brand-block {
+    margin: 0 auto;
   }
 
   .brand {
-    border: 0;
-    display: flex;
+    display: inline-flex;
     flex-direction: column;
     line-height: 1.2;
+    border: 0;
+    text-align: center;
   }
   .brand-name {
-    font-family: var(--font-serif);
-    font-size: 1.05rem;
+    font-weight: 300;
+    font-size: clamp(1.5rem, 3.2vw, 2.2rem);
+    letter-spacing: -0.015em;
+    margin-bottom: 8px;
   }
   .brand-sub {
-    font-size: 0.78rem;
-    color: var(--fg-muted);
-    letter-spacing: 0.04em;
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 0.3em;
     text-transform: uppercase;
+    color: var(--fg-muted);
+    margin-bottom: 28px;
   }
 
-  nav ul {
-    list-style: none;
-    margin: 0;
-    padding: 0;
+  .site-nav {
     display: flex;
-    gap: clamp(12px, 2.5vw, 24px);
     justify-content: center;
     flex-wrap: wrap;
+    gap: clamp(14px, 2.5vw, 32px);
+    padding: 16px 0 24px;
+    font-size: 12px;
+    font-weight: 500;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--fg-muted);
+    border-top: 1px solid var(--border);
+    border-bottom: 1px solid var(--border);
+    max-width: 880px;
+    margin: 0 auto;
   }
-  nav a {
+  .site-nav a {
     border: 0;
-    font-size: 0.95rem;
-    padding: 4px 0;
-    border-bottom: 1px solid transparent;
+    transition: color 160ms ease;
   }
-  nav a[aria-current='page'] {
-    border-bottom-color: currentColor;
-  }
+  .site-nav a:hover, .site-nav a.active { color: var(--fg); opacity: 1; }
+  /* Compensa el letter-spacing trailing del último item para centrado visual exacto */
+  .site-nav a:last-child { margin-inline-end: -0.18em; }
 
-  .actions {
+  .toggles {
+    position: fixed;
+    top: 16px; right: 16px;
+    z-index: 30;
     display: flex;
-    gap: 12px;
+    gap: 8px;
     align-items: center;
   }
-  .lang {
-    border: 0;
-    font-size: 0.85rem;
+  .toggle {
+    background: var(--bg);
+    border: 1px solid var(--border);
     color: var(--fg-muted);
-    letter-spacing: 0.04em;
+    padding: 6px 10px;
+    font: 500 10px/1 var(--font-sans);
+    letter-spacing: 0.2em;
     text-transform: uppercase;
+    cursor: pointer;
+    transition: color 160ms ease, border-color 160ms ease;
+    text-decoration: none;
   }
-  .theme-icon { font-size: 1.1rem; }
-
-  @media (max-width: 768px) {
-    .bar {
-      grid-template-columns: 1fr auto;
-      grid-template-areas: 'brand actions' 'nav nav';
-      row-gap: 12px;
-    }
-    .brand { grid-area: brand; }
-    .actions { grid-area: actions; }
-    nav { grid-area: nav; }
-    nav ul { justify-content: flex-start; }
+  .toggle:hover {
+    color: var(--fg);
+    border-color: var(--fg-muted);
+    opacity: 1;
+  }
+  .toggle-theme {
+    font-size: 14px;
+    line-height: 1;
+    padding: 6px 9px;
   }
 </style>
 
 <script>
   // Toggle de tema con persistencia en localStorage.
-  // Respeta prefers-color-scheme si no hay preferencia guardada.
+  // LIGHT es el default cuando no hay preferencia guardada.
   const KEY = 'galeria-theme';
   const root = document.documentElement;
 
@@ -159,7 +166,7 @@ const nav = [
   function current(): 'light' | 'dark' {
     const stored = localStorage.getItem(KEY);
     if (stored === 'light' || stored === 'dark') return stored;
-    return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    return 'light'; // default fijo, no respeta prefers-color-scheme
   }
 
   apply(current());

@@ -14,11 +14,12 @@ const base = import.meta.env.BASE_URL.replace(/\/$/, '');
 <footer class="site-footer">
   <div class="wrap">
     <p class="copy">
-      © {year} Tomás González Cifuentes. {t('footer.rights')}
-      {' · '}
-      <a href={`${base}/rss.xml`} class="rss-link" aria-label="RSS feed">RSS</a>
-      {' · '}
-      <a href={`${base}/lab/`} class="rss-link" aria-label="Design lab">Design lab</a>
+      © {year} Tomás González Cifuentes · {t('footer.rights')}
+    </p>
+    <p class="links">
+      <a href={`${base}/rss.xml`} aria-label="RSS feed">RSS</a>
+      <span class="sep">·</span>
+      <a href={`${base}/lab/`} aria-label="Design lab">Design lab</a>
     </p>
     <p class="note">
       <small>
@@ -33,22 +34,41 @@ const base = import.meta.env.BASE_URL.replace(/\/$/, '');
 <style>
   .site-footer {
     border-top: 1px solid var(--border);
-    padding: 32px clamp(16px, 4vw, 32px);
+    padding: 40px clamp(20px, 4vw, 32px);
     color: var(--fg-muted);
     background: var(--bg);
+    text-align: center;
   }
   .wrap {
     max-width: var(--maxw);
     margin-inline: auto;
   }
   .copy {
-    margin: 0 0 6px;
-    font-size: 0.9rem;
+    margin: 0 0 10px;
+    font-size: 0.85rem;
+    letter-spacing: 0.04em;
+    max-width: none;
+  }
+  .links {
+    margin: 0 0 18px;
+    font-size: 0.8rem;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+  }
+  .links a {
+    border: 0;
+    color: var(--fg-muted);
+  }
+  .links a:hover { color: var(--fg); opacity: 1; }
+  .sep {
+    color: var(--fg-faint);
+    margin: 0 8px;
   }
   .note {
-    margin: 0;
-    max-width: 70ch;
-    font-size: 0.78rem;
-    line-height: 1.5;
+    margin: 0 auto;
+    max-width: 60ch;
+    font-size: 0.74rem;
+    line-height: 1.55;
+    color: var(--fg-faint);
   }
 </style>

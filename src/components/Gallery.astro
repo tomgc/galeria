@@ -96,14 +96,19 @@ const decorated = photos.map((p) => {
         const cards = gallery.children;
         for (let i = 0; i < cards.length; i++) {
           const card = cards[i] as HTMLElement;
-          // Medimos el thumb (con aspect-ratio) y el caption — NO la card,
-          // porque la card está restringida a la altura del row-span actual.
+          // Medimos thumb (con aspect-ratio) + meta + info (si está abierto).
+          // No medimos card.height directamente porque está constrained al
+          // row-span actual del grid.
           const thumb = card.querySelector('.thumb') as HTMLElement | null;
-          const caption = card.querySelector('figcaption') as HTMLElement | null;
+          const meta = card.querySelector('.meta') as HTMLElement | null;
+          const info = card.querySelector('.info') as HTMLElement | null;
           const thumbH = thumb?.getBoundingClientRect().height ?? 0;
-          const captionH = caption?.getBoundingClientRect().height ?? 0;
-          const naturalH = Math.ceil(thumbH + captionH + 6);
-          if (naturalH < 10) continue; // ignora si aún no se midió
+          const metaH = meta?.getBoundingClientRect().height ?? 0;
+          const infoH = card.dataset.infoOpen === 'true'
+            ? (info?.getBoundingClientRect().height ?? 0)
+            : 0;
+          const naturalH = Math.ceil(thumbH + metaH + infoH + 12);
+          if (naturalH < 10) continue;
           const span = Math.max(1, Math.ceil((naturalH + gap) / (ROW_UNIT + gap)));
           card.style.gridRowEnd = `span ${span}`;
         }
@@ -126,6 +131,24 @@ const decorated = photos.map((p) => {
       cancelAnimationFrame(raf);
       raf = requestAnimationFrame(applySpans);
     });
+
+    // Reaplicar cuando un accordion [+] abre/cierra — la altura del card cambia.
+    // Usamos MutationObserver sobre data-info-open en cada card.
+    const cardObserver = new MutationObserver((records) => {
+      const relevant = records.some((r) =>
+        r.type === 'attributes' && r.attributeName === 'data-info-open');
+      if (relevant) {
+        // Esperar a que la transición CSS empiece y luego al final para
+        // re-calcular después de cada paso (suaviza el masonry durante la animación).
+        applySpans();
+        setTimeout(applySpans, 300);
+      }
+    });
+    for (const gallery of galleries) {
+      for (const card of Array.from(gallery.children)) {
+        cardObserver.observe(card, { attributes: true, attributeFilter: ['data-info-open'] });
+      }
+    }
   }
 
   if (document.readyState === 'loading') {
