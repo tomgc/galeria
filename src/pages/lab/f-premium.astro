@@ -1,0 +1,490 @@
+---
+import { Picture, getImage } from 'astro:assets';
+import { getAllPhotos } from '../../lib/photos';
+
+const photos = await getAllPhotos();
+const featured = photos.filter((p) => p.data.featured);
+const hero = featured[0] ?? photos[0];
+const rest = photos.filter((p) => p.id !== hero?.id);
+
+const base = import.meta.env.BASE_URL.replace(/\/$/, '');
+
+const heroFull = hero ? await getImage({
+  src: hero.data.image,
+  format: 'webp',
+  width: Math.min(2400, hero.data.image.width),
+}) : null;
+---
+
+<!doctype html>
+<html lang="es" data-theme="light">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="robots" content="noindex" />
+    <title>Variante F — Premium · Tomás González Cifuentes</title>
+
+    <!-- Aplica tema antes del paint para evitar flash. Light por defecto. -->
+    <script is:inline>
+      (function () {
+        try {
+          var t = localStorage.getItem('lab-f-theme');
+          if (t === 'dark') document.documentElement.setAttribute('data-theme', 'dark');
+          else document.documentElement.setAttribute('data-theme', 'light');
+        } catch (e) {}
+      })();
+    </script>
+
+    <style>
+      @import '@fontsource/inter/300.css';
+      @import '@fontsource/inter/400.css';
+      @import '@fontsource/inter/500.css';
+      @import '@fontsource/jetbrains-mono/400.css';
+
+      :root[data-theme='light'] {
+        --bg: #ffffff;
+        --bg-elev: #fafafa;
+        --fg: #0a0a0a;
+        --fg-muted: #6a6a6a;
+        --fg-faint: #999999;
+        --border: #e8e8e8;
+        --overlay: rgba(0, 0, 0, 0.75);
+        --overlay-fg: #f5f3ee;
+      }
+      :root[data-theme='dark'] {
+        --bg: #0a0a0a;
+        --bg-elev: #181818;
+        --fg: #f2f0ec;
+        --fg-muted: #8a857c;
+        --fg-faint: #5a5550;
+        --border: #2a2a2a;
+        --overlay: rgba(0, 0, 0, 0.85);
+        --overlay-fg: #f5f3ee;
+      }
+
+      * { box-sizing: border-box; }
+      body {
+        margin: 0;
+        background: var(--bg);
+        color: var(--fg);
+        font: 300 16px/1.6 'Inter', -apple-system, system-ui, sans-serif;
+        -webkit-font-smoothing: antialiased;
+        transition: background-color 200ms ease, color 200ms ease;
+      }
+      img { display: block; max-width: 100%; height: auto; }
+      a { color: inherit; text-decoration: none; }
+
+      .lab-nav {
+        position: fixed;
+        bottom: 20px; left: 20px; z-index: 30;
+        padding: 6px 12px;
+        background: var(--bg);
+        border: 1px solid var(--border);
+        font-size: 11px;
+        letter-spacing: 0.2em;
+        text-transform: uppercase;
+        color: var(--fg-muted);
+      }
+
+      /* ────── HEADER ────── */
+      header.site {
+        text-align: center;
+        padding: clamp(48px, 8vw, 88px) 24px 0;
+        position: relative;
+      }
+      .brand-name {
+        font-weight: 300;
+        font-size: clamp(1.6rem, 3.5vw, 2.4rem);
+        letter-spacing: -0.02em;
+        margin: 0 0 8px;
+        line-height: 1.1;
+      }
+      .brand-sub {
+        font-size: 11px;
+        font-weight: 500;
+        letter-spacing: 0.3em;
+        text-transform: uppercase;
+        color: var(--fg-muted);
+        margin: 0 0 28px;
+      }
+      .site-nav {
+        display: flex;
+        justify-content: center;
+        flex-wrap: wrap;
+        gap: clamp(14px, 2.5vw, 32px);
+        padding: 16px 0 24px;
+        font-size: 12px;
+        font-weight: 500;
+        letter-spacing: 0.18em;
+        text-transform: uppercase;
+        color: var(--fg-muted);
+        border-top: 1px solid var(--border);
+        border-bottom: 1px solid var(--border);
+        max-width: 880px;
+        margin: 0 auto;
+      }
+      .site-nav a { transition: color 160ms ease; }
+      .site-nav a:hover, .site-nav a.active { color: var(--fg); }
+
+      /* Toggles fijos arriba a la derecha */
+      .toggles {
+        position: fixed;
+        top: 16px; right: 16px;
+        z-index: 30;
+        display: flex;
+        gap: 8px;
+        align-items: center;
+      }
+      .toggle {
+        background: var(--bg);
+        border: 1px solid var(--border);
+        color: var(--fg-muted);
+        padding: 6px 10px;
+        font: 500 10px/1 'Inter', sans-serif;
+        letter-spacing: 0.2em;
+        text-transform: uppercase;
+        cursor: pointer;
+        transition: color 160ms ease, border-color 160ms ease;
+      }
+      .toggle:hover { color: var(--fg); border-color: var(--fg-muted); }
+      .toggle-theme {
+        font-size: 14px;
+        line-height: 1;
+        padding: 6px 9px;
+      }
+
+      /* ────── HERO ────── */
+      .hero {
+        margin: clamp(48px, 7vw, 96px) auto;
+        max-width: 1400px;
+        padding: 0 24px;
+      }
+      .photo-card {
+        position: relative;
+      }
+      .photo-frame {
+        position: relative;
+        overflow: hidden;
+        background: var(--bg-elev);
+        border: 1px solid var(--border);
+      }
+      .hero .photo-frame {
+        max-height: 80vh;
+      }
+      .hero .photo-frame :global(picture),
+      .hero .photo-frame :global(img) {
+        width: 100%;
+        height: auto;
+        object-fit: cover;
+        display: block;
+      }
+      .photo-overlay {
+        position: absolute;
+        inset-block-end: 0;
+        inset-inline: 0;
+        padding: clamp(24px, 4vw, 48px);
+        background: linear-gradient(transparent, var(--overlay));
+        color: var(--overlay-fg);
+        opacity: 0;
+        transform: translateY(8px);
+        transition: opacity 280ms ease, transform 280ms ease;
+        pointer-events: none;
+      }
+      .photo-card:hover .photo-overlay {
+        opacity: 1;
+        transform: translateY(0);
+      }
+      /* En mobile sin hover, la descripción siempre visible */
+      @media (hover: none) {
+        .photo-overlay { opacity: 1; transform: none; }
+      }
+      .photo-overlay p {
+        margin: 0;
+        max-width: 60ch;
+        font-size: 0.95rem;
+        line-height: 1.55;
+      }
+
+      .photo-meta {
+        margin-top: 16px;
+        display: flex;
+        align-items: baseline;
+        gap: 16px;
+        flex-wrap: wrap;
+      }
+      .photo-title {
+        flex: 1 1 auto;
+        font-weight: 400;
+        font-size: clamp(0.95rem, 1.6vw, 1.1rem);
+        margin: 0;
+        line-height: 1.4;
+        letter-spacing: -0.005em;
+      }
+      .photo-place {
+        font-size: 12px;
+        letter-spacing: 0.04em;
+        color: var(--fg-muted);
+      }
+      .info-btn {
+        background: transparent;
+        border: 0;
+        padding: 4px 0;
+        font: 500 11px/1 'Inter', sans-serif;
+        letter-spacing: 0.18em;
+        text-transform: uppercase;
+        color: var(--fg-faint);
+        cursor: pointer;
+        white-space: nowrap;
+        transition: color 160ms ease;
+      }
+      .info-btn:hover { color: var(--fg); }
+      .info-btn::after {
+        content: ' ↓';
+        display: inline-block;
+        margin-left: 4px;
+        transition: transform 200ms ease;
+      }
+      .photo-card[data-info-open='true'] .info-btn::after {
+        transform: rotate(180deg);
+      }
+
+      /* Panel de información técnica colapsable */
+      .photo-info {
+        display: grid;
+        grid-template-rows: 0fr;
+        transition: grid-template-rows 280ms ease, margin-top 280ms ease;
+        margin-top: 0;
+      }
+      .photo-card[data-info-open='true'] .photo-info {
+        grid-template-rows: 1fr;
+        margin-top: 16px;
+      }
+      .photo-info-inner {
+        overflow: hidden;
+        border-top: 1px solid var(--border);
+        padding-top: 16px;
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 24px;
+      }
+      @media (min-width: 720px) {
+        .photo-info-inner { grid-template-columns: max-content 1fr; }
+      }
+      .info-block dl {
+        margin: 0;
+        font-family: 'JetBrains Mono', ui-monospace, monospace;
+        font-size: 11px;
+        line-height: 1.7;
+      }
+      .info-block dt {
+        display: inline-block;
+        width: 110px;
+        color: var(--fg-faint);
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+      }
+      .info-block dd {
+        display: inline;
+        margin: 0;
+        color: var(--fg);
+      }
+      .info-block dd::after { content: ''; display: block; }
+      .info-tags {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+        align-items: flex-start;
+      }
+      .info-tag {
+        padding: 3px 10px;
+        border: 1px solid var(--border);
+        font-size: 11px;
+        letter-spacing: 0.04em;
+        color: var(--fg-muted);
+      }
+
+      /* ────── GRID ────── */
+      .grid {
+        max-width: 1400px;
+        margin: 0 auto;
+        padding: 0 24px clamp(80px, 12vw, 160px);
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: clamp(48px, 6vw, 96px);
+      }
+      @media (min-width: 800px) {
+        .grid { grid-template-columns: 1fr 1fr; gap: 56px 48px; }
+      }
+      @media (min-width: 1200px) {
+        .grid { gap: 80px 56px; }
+      }
+
+      /* ────── FOOTER ────── */
+      footer.site {
+        border-top: 1px solid var(--border);
+        padding: 40px 24px;
+        text-align: center;
+        font-size: 12px;
+        letter-spacing: 0.08em;
+        color: var(--fg-muted);
+      }
+      footer.site p { margin: 4px 0; }
+    </style>
+  </head>
+  <body>
+    <a class="lab-nav" href={`${base}/lab/`}>← lab</a>
+
+    <div class="toggles">
+      <button type="button" class="toggle" id="lang-toggle" aria-label="Cambiar idioma">ES / EN</button>
+      <button type="button" class="toggle toggle-theme" id="theme-toggle" aria-label="Cambiar tema">◐</button>
+    </div>
+
+    <header class="site">
+      <h1 class="brand-name">Tomás González Cifuentes</h1>
+      <p class="brand-sub">Fotografía de naturaleza</p>
+      <nav class="site-nav" aria-label="Principal">
+        <a href="#" class="active">Portada</a>
+        <a href="#">Aves</a>
+        <a href="#">Paisajes</a>
+        <a href="#">Mapa</a>
+        <a href="#">Sobre mí</a>
+        <a href="#">Contacto</a>
+      </nav>
+    </header>
+
+    {hero && heroFull && (
+      <section class="hero">
+        <article class="photo-card" data-info-open="false">
+          <div class="photo-frame">
+            <Picture
+              src={hero.data.image}
+              formats={['avif', 'webp']}
+              widths={[1200, 2400]}
+              sizes="(min-width: 1400px) 1400px, 100vw"
+              alt={hero.data.title_es}
+              loading="eager"
+              draggable={false}
+            />
+            {hero.data.description_es && (
+              <div class="photo-overlay">
+                <p>{hero.data.description_es}</p>
+              </div>
+            )}
+          </div>
+          <div class="photo-meta">
+            <h2 class="photo-title">{hero.data.title_es}</h2>
+            <span class="photo-place">
+              {[hero.data.location.city, hero.data.location.region].filter(Boolean).join(', ')}
+            </span>
+            <button type="button" class="info-btn">Información técnica</button>
+          </div>
+          <div class="photo-info">
+            <div class="photo-info-inner">
+              <div class="info-block">
+                <dl>
+                  {hero.data.camera.model && <><dt>Cámara</dt><dd>{hero.data.camera.model}</dd></>}
+                  {hero.data.camera.lens && <><dt>Objetivo</dt><dd>{hero.data.camera.lens}</dd></>}
+                  {hero.data.exif.aperture && <><dt>Apertura</dt><dd>{hero.data.exif.aperture}</dd></>}
+                  {hero.data.exif.shutter_speed && <><dt>Obturación</dt><dd>{hero.data.exif.shutter_speed}</dd></>}
+                  {hero.data.exif.iso && <><dt>ISO</dt><dd>{hero.data.exif.iso}</dd></>}
+                  {hero.data.exif.focal_length && <><dt>Focal</dt><dd>{hero.data.exif.focal_length}</dd></>}
+                  <dt>Fecha</dt><dd>{new Date(hero.data.date_taken).toLocaleDateString('es-CL', { year: 'numeric', month: 'long', day: 'numeric' })}</dd>
+                  {hero.data.coords && <><dt>Coord.</dt><dd>{hero.data.coords.lat.toFixed(3)}, {hero.data.coords.lng.toFixed(3)}</dd></>}
+                </dl>
+              </div>
+              {hero.data.tags.length > 0 && (
+                <div class="info-tags">
+                  {hero.data.tags.map((t) => <span class="info-tag">{t}</span>)}
+                </div>
+              )}
+            </div>
+          </div>
+        </article>
+      </section>
+    )}
+
+    <section class="grid">
+      {rest.map((photo) => {
+        const data = photo.data;
+        const place = [data.location.city, data.location.region].filter(Boolean).join(', ');
+        return (
+          <article class="photo-card" data-info-open="false">
+            <div class="photo-frame">
+              <Picture
+                src={data.image}
+                formats={['avif', 'webp']}
+                widths={[600, 1200]}
+                sizes="(min-width: 800px) 50vw, 100vw"
+                alt={data.title_es}
+                loading="lazy"
+                draggable={false}
+              />
+              {data.description_es && (
+                <div class="photo-overlay">
+                  <p>{data.description_es}</p>
+                </div>
+              )}
+            </div>
+            <div class="photo-meta">
+              <h2 class="photo-title">{data.title_es}</h2>
+              {place && <span class="photo-place">{place}</span>}
+              <button type="button" class="info-btn">Info</button>
+            </div>
+            <div class="photo-info">
+              <div class="photo-info-inner">
+                <div class="info-block">
+                  <dl>
+                    {data.camera.model && <><dt>Cámara</dt><dd>{data.camera.model}</dd></>}
+                    {data.camera.lens && <><dt>Objetivo</dt><dd>{data.camera.lens}</dd></>}
+                    {data.exif.aperture && <><dt>Apertura</dt><dd>{data.exif.aperture}</dd></>}
+                    {data.exif.shutter_speed && <><dt>Obturación</dt><dd>{data.exif.shutter_speed}</dd></>}
+                    {data.exif.iso && <><dt>ISO</dt><dd>{data.exif.iso}</dd></>}
+                    {data.exif.focal_length && <><dt>Focal</dt><dd>{data.exif.focal_length}</dd></>}
+                    <dt>Fecha</dt><dd>{new Date(data.date_taken).toLocaleDateString('es-CL', { year: 'numeric', month: 'long', day: 'numeric' })}</dd>
+                    {data.coords && <><dt>Coord.</dt><dd>{data.coords.lat.toFixed(3)}, {data.coords.lng.toFixed(3)}</dd></>}
+                  </dl>
+                </div>
+                {data.tags.length > 0 && (
+                  <div class="info-tags">
+                    {data.tags.map((t) => <span class="info-tag">{t}</span>)}
+                  </div>
+                )}
+              </div>
+            </div>
+          </article>
+        );
+      })}
+    </section>
+
+    <footer class="site">
+      <p>© 2026 Tomás González Cifuentes · Todos los derechos reservados</p>
+      <p>Variante F — Premium minimalista</p>
+    </footer>
+
+    <script>
+      // Toggle del panel "información técnica" por foto
+      document.querySelectorAll('.info-btn').forEach((btn) => {
+        btn.addEventListener('click', () => {
+          const card = (btn as HTMLElement).closest<HTMLElement>('.photo-card');
+          if (!card) return;
+          const open = card.dataset.infoOpen === 'true';
+          card.dataset.infoOpen = open ? 'false' : 'true';
+        });
+      });
+
+      // Toggle de tema con persistencia local (independiente del sitio principal)
+      const themeBtn = document.getElementById('theme-toggle');
+      themeBtn?.addEventListener('click', () => {
+        const cur = document.documentElement.getAttribute('data-theme');
+        const next = cur === 'dark' ? 'light' : 'dark';
+        document.documentElement.setAttribute('data-theme', next);
+        try { localStorage.setItem('lab-f-theme', next); } catch (e) {}
+      });
+
+      // Toggle de idioma (mock — esta es una variante demo)
+      document.getElementById('lang-toggle')?.addEventListener('click', () => {
+        alert('Toggle ES/EN — en la versión final, esto navega entre /es/ y /en/');
+      });
+    </script>
+  </body>
+</html>
