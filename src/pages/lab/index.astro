@@ -26,6 +26,13 @@ const variants = [
     refs: 'Phaidon · Steidl · Aperture',
     palette: ['#ffffff', '#000000', '#a8a39a'],
   },
+  {
+    key: 'e-minimal',
+    label: 'E — Minimalismo puro',
+    blurb: 'Una columna de 760px. System stack. Solo negro, gris y blanco. Sin nav, sin bordes, sin íconos, sin decoraciones. La foto y nada más.',
+    refs: 'Andy Warhol · Dieter Rams · brutalism web',
+    palette: ['#ffffff', '#111111', '#999999'],
+  },
 ];
 ---
 
@@ -74,7 +81,10 @@ const variants = [
         grid-template-columns: 1fr;
       }
       @media (min-width: 720px) {
-        .variants { grid-template-columns: repeat(3, 1fr); }
+        .variants { grid-template-columns: repeat(2, 1fr); }
+      }
+      @media (min-width: 1100px) {
+        .variants { grid-template-columns: repeat(4, 1fr); }
       }
 
       .card {
