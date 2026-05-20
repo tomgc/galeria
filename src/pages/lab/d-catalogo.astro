@@ -1,0 +1,325 @@
+---
+import { Picture } from 'astro:assets';
+import { getAllPhotos } from '../../lib/photos';
+
+const photos = await getAllPhotos();
+const base = import.meta.env.BASE_URL.replace(/\/$/, '');
+
+// Numeración romana para los plates
+function toRoman(n: number): string {
+  const map: [number, string][] = [
+    [1000, 'M'], [900, 'CM'], [500, 'D'], [400, 'CD'],
+    [100, 'C'], [90, 'XC'], [50, 'L'], [40, 'XL'],
+    [10, 'X'], [9, 'IX'], [5, 'V'], [4, 'IV'], [1, 'I'],
+  ];
+  let out = '';
+  for (const [val, sym] of map) {
+    while (n >= val) { out += sym; n -= val; }
+  }
+  return out;
+}
+---
+
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="robots" content="noindex" />
+    <title>Variante D — Catálogo · Tomás González Cifuentes</title>
+    <style>
+      @import '@fontsource/inter/300.css';
+      @import '@fontsource/inter/400.css';
+      @import '@fontsource/inter/500.css';
+      @import '@fontsource/inter/700.css';
+
+      :root {
+        --bg: #ffffff;
+        --ink: #000000;
+        --ink-soft: #4a4a4a;
+        --ink-faint: #999999;
+        --rule: #e5e5e5;
+        --sans: 'Inter', -apple-system, system-ui, sans-serif;
+      }
+      * { box-sizing: border-box; }
+      body {
+        margin: 0;
+        background: var(--bg);
+        color: var(--ink);
+        font: 300 16px/1.6 var(--sans);
+        -webkit-font-smoothing: antialiased;
+      }
+      img { display: block; max-width: 100%; height: auto; }
+      a { color: inherit; text-decoration: none; }
+
+      .lab-nav {
+        position: fixed;
+        top: 24px; left: 24px; z-index: 10;
+        padding: 8px 14px;
+        background: var(--bg);
+        border: 1px solid var(--ink);
+        font: 500 10px/1 var(--sans);
+        letter-spacing: 0.18em;
+        text-transform: uppercase;
+      }
+
+      /* Portada del catálogo */
+      header.cover {
+        max-width: 1100px;
+        margin: 0 auto;
+        padding: clamp(80px, 12vh, 140px) 24px clamp(60px, 8vh, 100px);
+        text-align: center;
+      }
+      .cover-mark {
+        font: 500 11px/1 var(--sans);
+        letter-spacing: 0.4em;
+        text-transform: uppercase;
+        color: var(--ink-faint);
+        margin-bottom: 32px;
+      }
+      .cover-title {
+        font-weight: 300;
+        font-size: clamp(2.8rem, 7vw, 5.2rem);
+        line-height: 1;
+        letter-spacing: -0.04em;
+        margin: 0 0 24px;
+      }
+      .cover-subtitle {
+        font-weight: 400;
+        font-size: 1.05rem;
+        line-height: 1.5;
+        color: var(--ink-soft);
+        max-width: 50ch;
+        margin: 0 auto 60px;
+      }
+      .cover-divider {
+        width: 1px;
+        height: 80px;
+        background: var(--ink);
+        margin: 0 auto;
+      }
+      .cover-info {
+        margin-top: 48px;
+        font: 500 11px/1.6 var(--sans);
+        letter-spacing: 0.2em;
+        text-transform: uppercase;
+        color: var(--ink-faint);
+      }
+      .cover-info span { display: block; }
+
+      /* Índice de placas */
+      .toc {
+        max-width: 800px;
+        margin: 60px auto 120px;
+        padding: 0 24px;
+      }
+      .toc-heading {
+        font: 500 11px/1 var(--sans);
+        letter-spacing: 0.3em;
+        text-transform: uppercase;
+        margin: 0 0 32px;
+        padding-bottom: 16px;
+        border-bottom: 1px solid var(--ink);
+      }
+      .toc-list { list-style: none; padding: 0; margin: 0; }
+      .toc-list li {
+        display: flex;
+        align-items: baseline;
+        padding: 12px 0;
+        border-bottom: 1px solid var(--rule);
+      }
+      .toc-plate {
+        font-weight: 500;
+        letter-spacing: 0.1em;
+        font-size: 0.78rem;
+        width: 80px;
+        text-transform: uppercase;
+        color: var(--ink-faint);
+      }
+      .toc-title {
+        flex: 1;
+        font-size: 0.95rem;
+      }
+      .toc-cat {
+        font-size: 0.72rem;
+        letter-spacing: 0.18em;
+        text-transform: uppercase;
+        color: var(--ink-faint);
+      }
+
+      /* Plates (cada foto) */
+      .plate {
+        max-width: 1200px;
+        margin: 120px auto;
+        padding: 0 24px;
+      }
+      .plate-meta {
+        display: flex;
+        align-items: baseline;
+        gap: 24px;
+        margin-bottom: 24px;
+        padding-bottom: 16px;
+        border-bottom: 1px solid var(--ink);
+      }
+      .plate-mark {
+        font-weight: 500;
+        font-size: 0.78rem;
+        letter-spacing: 0.25em;
+        text-transform: uppercase;
+        color: var(--ink);
+      }
+      .plate-cat {
+        font-size: 0.72rem;
+        letter-spacing: 0.2em;
+        text-transform: uppercase;
+        color: var(--ink-faint);
+      }
+      .plate-img {
+        background: #fafafa;
+      }
+      .plate-img :global(picture),
+      .plate-img :global(img) {
+        width: 100%;
+        height: auto;
+        max-height: 80vh;
+        object-fit: contain;
+      }
+      .plate-caption {
+        margin-top: 24px;
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 12px;
+      }
+      @media (min-width: 720px) {
+        .plate-caption { grid-template-columns: 1.6fr 1fr; gap: 60px; }
+      }
+      .plate-title {
+        font-weight: 400;
+        font-size: clamp(1.2rem, 2vw, 1.5rem);
+        line-height: 1.3;
+        margin: 0 0 8px;
+        letter-spacing: -0.01em;
+      }
+      .plate-sci {
+        font-style: italic;
+        font-weight: 300;
+        color: var(--ink-soft);
+        font-size: 0.92rem;
+        margin: 0 0 16px;
+      }
+      .plate-desc {
+        font-size: 0.92rem;
+        line-height: 1.7;
+        max-width: 60ch;
+        color: var(--ink-soft);
+      }
+      .plate-tech {
+        font-size: 0.72rem;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--ink-faint);
+        line-height: 1.8;
+      }
+      .plate-tech div { padding: 2px 0; }
+      .plate-tech .k { display: inline-block; width: 80px; color: var(--ink); }
+
+      footer.colophon {
+        max-width: 1200px;
+        margin: 200px auto 80px;
+        padding: 60px 24px 0;
+        border-top: 1px solid var(--ink);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 16px;
+        font: 500 11px/1.6 var(--sans);
+        letter-spacing: 0.2em;
+        text-transform: uppercase;
+        color: var(--ink-faint);
+      }
+      footer.colophon .mark {
+        font-weight: 700;
+        font-size: 0.85rem;
+        letter-spacing: 0.3em;
+        color: var(--ink);
+      }
+    </style>
+  </head>
+  <body>
+    <a class="lab-nav" href={`${base}/lab/`}>← Lab</a>
+
+    <header class="cover">
+      <p class="cover-mark">TGC · MMXXVI</p>
+      <h1 class="cover-title">Catálogo<br/>de naturaleza</h1>
+      <p class="cover-subtitle">
+        Fotografías de aves y paisajes del sur de Chile y la Patagonia.
+        Volumen primero — Otoño 2026.
+      </p>
+      <div class="cover-divider"></div>
+      <div class="cover-info">
+        <span>Tomás González Cifuentes</span>
+        <span>Edición limitada</span>
+      </div>
+    </header>
+
+    <section class="toc">
+      <p class="toc-heading">Índice de placas</p>
+      <ul class="toc-list">
+        {photos.map((p, i) => (
+          <li>
+            <span class="toc-plate">Placa {toRoman(i + 1)}</span>
+            <span class="toc-title">{p.data.title_es}</span>
+            <span class="toc-cat">{p.data.category}</span>
+          </li>
+        ))}
+      </ul>
+    </section>
+
+    {photos.map((photo, i) => {
+      const data = photo.data;
+      const date = new Date(data.date_taken).getFullYear();
+      const loc = [data.location.city, data.location.region, data.location.country].filter(Boolean).join(', ');
+      return (
+        <article class="plate">
+          <div class="plate-meta">
+            <span class="plate-mark">Placa {toRoman(i + 1)}</span>
+            <span class="plate-cat">{data.category} · {date}</span>
+          </div>
+          <figure class="plate-img">
+            <Picture
+              src={data.image}
+              formats={['avif', 'webp']}
+              widths={[1200, 2400]}
+              sizes="(min-width: 1200px) 1200px, 100vw"
+              alt={data.title_es}
+              loading="lazy"
+            />
+          </figure>
+          <div class="plate-caption">
+            <div>
+              <h2 class="plate-title">{data.title_es}</h2>
+              {data.species_scientific && (
+                <p class="plate-sci">{data.species_common_es} · {data.species_scientific}</p>
+              )}
+              {data.description_es && <p class="plate-desc">{data.description_es}</p>}
+            </div>
+            <div class="plate-tech">
+              {loc && <div><span class="k">Lugar</span>{loc}</div>}
+              {data.camera.model && <div><span class="k">Cámara</span>{data.camera.model}</div>}
+              {data.exif.aperture && <div><span class="k">Apertura</span>{data.exif.aperture}</div>}
+              {data.exif.shutter_speed && <div><span class="k">Obtur.</span>{data.exif.shutter_speed}</div>}
+              {data.exif.iso && <div><span class="k">ISO</span>{data.exif.iso}</div>}
+              {data.exif.focal_length && <div><span class="k">Focal</span>{data.exif.focal_length}</div>}
+            </div>
+          </div>
+        </article>
+      );
+    })}
+
+    <footer class="colophon">
+      <span class="mark">TGC · {photos.length} placas</span>
+      <span>© Tomás González Cifuentes · Todos los derechos reservados</span>
+      <span>Variante D — Catálogo</span>
+    </footer>
+  </body>
+</html>

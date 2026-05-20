@@ -1,0 +1,295 @@
+---
+import { Picture } from 'astro:assets';
+import { getAllPhotos } from '../../lib/photos';
+
+const photos = await getAllPhotos();
+const base = import.meta.env.BASE_URL.replace(/\/$/, '');
+---
+
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="robots" content="noindex" />
+    <title>Variante C — Field Notes · Tomás González Cifuentes</title>
+    <style>
+      @import '@fontsource/cormorant-garamond/400.css';
+      @import '@fontsource/cormorant-garamond/400-italic.css';
+      @import '@fontsource/cormorant-garamond/700.css';
+      @import '@fontsource/jetbrains-mono/400.css';
+      @import '@fontsource/jetbrains-mono/500.css';
+
+      :root {
+        --paper: #f3ecda;
+        --paper-dark: #ebe3cd;
+        --ink: #3a2818;
+        --ink-light: #6b5238;
+        --moss: #5a7c47;
+        --sepia: #c19b6f;
+        --serif: 'Cormorant Garamond', Georgia, serif;
+        --mono: 'JetBrains Mono', ui-monospace, 'SF Mono', Menlo, monospace;
+        --sans: system-ui, -apple-system, sans-serif;
+      }
+      * { box-sizing: border-box; }
+      body {
+        margin: 0;
+        background: var(--paper);
+        color: var(--ink);
+        font-family: var(--serif);
+        font-size: 18px;
+        line-height: 1.65;
+        /* Textura sutil tipo papel envejecido */
+        background-image:
+          radial-gradient(circle at 25% 25%, rgba(58, 40, 24, 0.025) 0%, transparent 50%),
+          radial-gradient(circle at 75% 75%, rgba(58, 40, 24, 0.03) 0%, transparent 50%);
+        background-size: 600px 600px, 400px 400px;
+      }
+      img { display: block; max-width: 100%; height: auto; }
+      a { color: inherit; }
+
+      .lab-nav {
+        position: fixed;
+        top: 16px; left: 16px; z-index: 10;
+        background: var(--paper-dark);
+        border: 1px solid var(--ink);
+        padding: 6px 12px;
+        font: 11px/1 var(--mono);
+        letter-spacing: 0.05em;
+        text-decoration: none;
+        color: var(--ink);
+      }
+
+      /* Encabezado del cuaderno */
+      header.notebook-head {
+        max-width: 900px;
+        margin: 0 auto;
+        padding: 80px 24px 40px;
+        text-align: center;
+        position: relative;
+      }
+      .stamp {
+        position: absolute;
+        top: 60px; right: 24px;
+        font: 700 11px/1 var(--mono);
+        letter-spacing: 0.2em;
+        color: var(--moss);
+        border: 2px solid var(--moss);
+        padding: 8px 14px;
+        transform: rotate(-6deg);
+        opacity: 0.65;
+        text-transform: uppercase;
+      }
+      .notebook-head h1 {
+        font-family: var(--serif);
+        font-style: italic;
+        font-weight: 400;
+        font-size: clamp(2.6rem, 6vw, 4.4rem);
+        line-height: 1.05;
+        margin: 0 0 12px;
+      }
+      .notebook-head .sub {
+        font: 500 12px/1.6 var(--mono);
+        text-transform: uppercase;
+        letter-spacing: 0.18em;
+        color: var(--ink-light);
+        margin: 16px 0 0;
+      }
+      .notebook-head hr {
+        margin: 28px auto 0;
+        width: 80px;
+        border: 0;
+        border-top: 1px solid var(--ink-light);
+      }
+
+      /* Lista de registros (cada foto = una entrada) */
+      .entries { max-width: 1000px; margin: 0 auto; padding: 40px 24px; }
+
+      .entry {
+        display: grid;
+        gap: 28px;
+        margin-bottom: 80px;
+        padding-bottom: 80px;
+        border-bottom: 1px solid var(--sepia);
+        grid-template-columns: 1fr;
+      }
+      @media (min-width: 800px) {
+        .entry { grid-template-columns: 1.3fr 1fr; align-items: start; }
+        .entry:nth-child(even) { grid-template-columns: 1fr 1.3fr; }
+        .entry:nth-child(even) .photo-frame { order: 2; }
+      }
+      .entry:last-child { border-bottom: 0; }
+
+      .photo-frame {
+        background: white;
+        padding: 12px 12px 36px;
+        box-shadow: 0 1px 0 var(--sepia), 0 18px 30px -20px rgba(58, 40, 24, 0.3);
+        transform: rotate(-0.4deg);
+      }
+      .entry:nth-child(even) .photo-frame { transform: rotate(0.5deg); }
+      .photo-frame :global(picture),
+      .photo-frame :global(img) { width: 100%; height: auto; }
+      .photo-caption {
+        margin-top: 12px;
+        text-align: center;
+        font: italic 14px/1.4 var(--serif);
+        color: var(--ink-light);
+      }
+
+      /* Ficha técnica */
+      .field-card {
+        background: var(--paper-dark);
+        border: 1px solid var(--ink-light);
+        padding: 24px 28px;
+        position: relative;
+      }
+      .field-card::before {
+        content: '';
+        position: absolute;
+        top: -10px;
+        left: 20px;
+        background: var(--sepia);
+        color: var(--paper);
+        font: 700 9px/1 var(--mono);
+        letter-spacing: 0.2em;
+        padding: 4px 10px;
+        text-transform: uppercase;
+      }
+      .entry:nth-child(odd) .field-card::before { content: 'AVES'; }
+      .entry.paisaje .field-card::before { content: 'PAISAJES'; }
+
+      .entry-num {
+        font: 700 11px/1 var(--mono);
+        letter-spacing: 0.15em;
+        color: var(--moss);
+        margin-bottom: 12px;
+      }
+      .entry-title {
+        font-family: var(--serif);
+        font-style: italic;
+        font-weight: 700;
+        font-size: 1.8rem;
+        line-height: 1.15;
+        margin: 0 0 4px;
+      }
+      .entry-sci {
+        font: italic 14px/1.4 var(--serif);
+        color: var(--ink-light);
+        margin: 0 0 18px;
+      }
+      .entry-note {
+        font: 16px/1.55 var(--serif);
+        color: var(--ink);
+        margin: 0 0 20px;
+        max-width: 36ch;
+        white-space: pre-line;
+      }
+      .data-table {
+        margin: 0;
+        font-family: var(--mono);
+        font-size: 12px;
+        line-height: 1.6;
+        color: var(--ink);
+      }
+      .data-row {
+        display: grid;
+        grid-template-columns: 90px 1fr;
+        gap: 12px;
+        padding: 6px 0;
+        border-bottom: 1px dashed var(--sepia);
+      }
+      .data-row:last-child { border-bottom: 0; }
+      .data-row .k {
+        color: var(--ink-light);
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+      }
+      .data-row .v { color: var(--ink); }
+
+      footer.colophon {
+        max-width: 1000px;
+        margin: 40px auto 60px;
+        padding: 24px;
+        font: italic 14px/1.5 var(--serif);
+        text-align: center;
+        color: var(--ink-light);
+      }
+      footer.colophon hr {
+        width: 80px;
+        margin: 0 auto 16px;
+        border: 0;
+        border-top: 1px solid var(--sepia);
+      }
+    </style>
+  </head>
+  <body>
+    <a class="lab-nav" href={`${base}/lab/`}>← Lab</a>
+
+    <header class="notebook-head">
+      <div class="stamp">Registrado · 2026</div>
+      <h1>Cuaderno de campo</h1>
+      <p class="sub">Tomás González Cifuentes — Observaciones desde el sur de Chile</p>
+      <hr />
+    </header>
+
+    <section class="entries">
+      {photos.map((photo, i) => {
+        const data = photo.data;
+        const num = String(i + 1).padStart(3, '0');
+        const date = new Date(data.date_taken).toLocaleDateString('es-CL', {
+          day: '2-digit', month: 'long', year: 'numeric'
+        });
+        const time = new Date(data.date_taken).toLocaleTimeString('es-CL', {
+          hour: '2-digit', minute: '2-digit'
+        });
+        const loc = [data.location.city, data.location.region].filter(Boolean).join(', ');
+        return (
+          <article class:list={['entry', { paisaje: data.category === 'paisajes' }]}>
+            <figure class="photo-frame">
+              <Picture
+                src={data.image}
+                formats={['avif', 'webp']}
+                widths={[600, 1200]}
+                sizes="(min-width: 800px) 600px, 100vw"
+                alt={data.title_es}
+                loading="lazy"
+              />
+              <figcaption class="photo-caption">Fig. {i + 1} — {data.title_es}</figcaption>
+            </figure>
+            <div class="field-card">
+              <p class="entry-num">№ {num} · Especimen documentado</p>
+              <h2 class="entry-title">{data.title_es}</h2>
+              {data.species_scientific && (
+                <p class="entry-sci">{data.species_common_es} · {data.species_scientific}</p>
+              )}
+              <p class="entry-note">
+                {data.description_es || 'Notas pendientes de transcripción desde el cuaderno original.'}
+              </p>
+              <dl class="data-table">
+                <div class="data-row"><span class="k">Fecha</span><span class="v">{date}</span></div>
+                {loc && <div class="data-row"><span class="k">Lugar</span><span class="v">{loc}</span></div>}
+                {data.coords && (
+                  <div class="data-row">
+                    <span class="k">Coord.</span>
+                    <span class="v">{data.coords.lat.toFixed(3)}, {data.coords.lng.toFixed(3)}</span>
+                  </div>
+                )}
+                {data.camera.model && <div class="data-row"><span class="k">Cámara</span><span class="v">{data.camera.model}</span></div>}
+                {data.camera.lens && <div class="data-row"><span class="k">Objetivo</span><span class="v">{data.camera.lens}</span></div>}
+                {data.exif.aperture && <div class="data-row"><span class="k">Apertura</span><span class="v">{data.exif.aperture}</span></div>}
+                {data.exif.shutter_speed && <div class="data-row"><span class="k">Obturación</span><span class="v">{data.exif.shutter_speed}</span></div>}
+                {data.exif.iso && <div class="data-row"><span class="k">ISO</span><span class="v">{data.exif.iso}</span></div>}
+                {data.exif.focal_length && <div class="data-row"><span class="k">Focal</span><span class="v">{data.exif.focal_length}</span></div>}
+              </dl>
+            </div>
+          </article>
+        );
+      })}
+    </section>
+
+    <footer class="colophon">
+      <hr />
+      Cuaderno mantenido por Tomás González Cifuentes · MMXXVI
+    </footer>
+  </body>
+</html>

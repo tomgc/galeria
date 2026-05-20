@@ -1,0 +1,363 @@
+---
+import { Picture, getImage } from 'astro:assets';
+import { getAllPhotos } from '../../lib/photos';
+
+const photos = await getAllPhotos();
+const featured = photos.filter((p) => p.data.featured);
+const hero = featured[0] ?? photos[0];
+const stories = photos.filter((p) => p.id !== hero?.id);
+
+const base = import.meta.env.BASE_URL.replace(/\/$/, '');
+
+// Hero image grande
+const heroImg = hero ? await getImage({
+  src: hero.data.image,
+  format: 'webp',
+  width: 2400,
+}) : null;
+---
+
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="robots" content="noindex" />
+    <title>Variante A — Editorial · Tomás González Cifuentes</title>
+    <style>
+      @import '@fontsource/playfair-display/400.css';
+      @import '@fontsource/playfair-display/700.css';
+      @import '@fontsource/playfair-display/400-italic.css';
+      @import '@fontsource/source-serif-4/400.css';
+      @import '@fontsource/source-serif-4/600.css';
+
+      :root {
+        --bg: #fafaf7;
+        --fg: #1a2030;
+        --fg-muted: #5a5a55;
+        --accent: #7a8c5a;
+        --rule: #d4cfc0;
+        --serif: 'Playfair Display', Georgia, serif;
+        --body: 'Source Serif 4', Georgia, serif;
+        --sans: system-ui, -apple-system, sans-serif;
+      }
+      * { box-sizing: border-box; }
+      body {
+        margin: 0;
+        background: var(--bg);
+        color: var(--fg);
+        font: 17px/1.7 var(--body);
+        -webkit-font-smoothing: antialiased;
+      }
+      img { display: block; max-width: 100%; height: auto; }
+      a { color: inherit; }
+
+      .lab-nav {
+        position: fixed;
+        top: 16px; left: 16px; z-index: 10;
+        background: var(--bg);
+        border: 1px solid var(--rule);
+        padding: 6px 12px;
+        font: 11px/1 var(--sans);
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        text-decoration: none;
+        color: var(--fg-muted);
+      }
+      .lab-nav:hover { color: var(--fg); }
+
+      /* Cabecera de "diario" */
+      .masthead {
+        text-align: center;
+        padding: 80px 24px 40px;
+        border-bottom: 3px double var(--rule);
+        max-width: 1100px;
+        margin: 0 auto;
+      }
+      .kicker {
+        font: 12px/1 var(--sans);
+        letter-spacing: 0.3em;
+        text-transform: uppercase;
+        color: var(--fg-muted);
+      }
+      .title {
+        font-family: var(--serif);
+        font-size: clamp(3rem, 7vw, 5.6rem);
+        font-weight: 700;
+        line-height: 1;
+        margin: 18px 0 12px;
+        letter-spacing: -0.02em;
+      }
+      .subtitle {
+        font-family: var(--serif);
+        font-style: italic;
+        font-size: clamp(1rem, 1.6vw, 1.2rem);
+        font-weight: 400;
+        color: var(--fg-muted);
+        max-width: 50ch;
+        margin: 0 auto;
+      }
+      .meta-line {
+        margin-top: 24px;
+        font: 11px/1 var(--sans);
+        letter-spacing: 0.2em;
+        text-transform: uppercase;
+        color: var(--fg-muted);
+      }
+
+      /* Hero a pantalla completa */
+      .hero-section { position: relative; margin-top: 0; }
+      .hero-img-wrap {
+        width: 100%;
+        height: 100vh;
+        max-height: 900px;
+        overflow: hidden;
+      }
+      .hero-img-wrap :global(picture),
+      .hero-img-wrap :global(img) {
+        width: 100%; height: 100%;
+        object-fit: cover;
+      }
+      .hero-caption {
+        position: absolute;
+        bottom: 0; left: 0; right: 0;
+        background: linear-gradient(transparent, rgba(0,0,0,0.7));
+        color: #fafaf7;
+        padding: 80px clamp(24px, 6vw, 80px) 40px;
+      }
+      .hero-caption .kicker { color: #c0bba8; }
+      .hero-caption .h-title {
+        font-family: var(--serif);
+        font-size: clamp(2rem, 5vw, 3.6rem);
+        font-weight: 400;
+        margin: 12px 0 0;
+        max-width: 22ch;
+        line-height: 1.1;
+      }
+      .hero-caption .h-byline {
+        margin-top: 12px;
+        font: 12px/1 var(--sans);
+        letter-spacing: 0.2em;
+        text-transform: uppercase;
+        opacity: 0.85;
+      }
+
+      /* Sección de historia */
+      .story {
+        max-width: 1200px;
+        margin: 100px auto;
+        padding: 0 clamp(24px, 5vw, 48px);
+      }
+      .story-num {
+        font: 12px/1 var(--sans);
+        letter-spacing: 0.3em;
+        text-transform: uppercase;
+        color: var(--accent);
+        margin-bottom: 8px;
+      }
+      .story-title {
+        font-family: var(--serif);
+        font-size: clamp(2rem, 4vw, 2.8rem);
+        font-weight: 400;
+        line-height: 1.15;
+        margin: 0 0 8px;
+        max-width: 22ch;
+      }
+      .story-deck {
+        font-style: italic;
+        font-family: var(--serif);
+        font-size: 1.15rem;
+        color: var(--fg-muted);
+        margin: 0 0 36px;
+        max-width: 56ch;
+      }
+      .story-layout {
+        display: grid;
+        gap: 48px;
+        grid-template-columns: 1fr;
+      }
+      @media (min-width: 900px) {
+        .story-layout { grid-template-columns: 1.4fr 1fr; align-items: start; }
+        .story:nth-of-type(2n) .story-layout {
+          grid-template-columns: 1fr 1.4fr;
+        }
+        .story:nth-of-type(2n) .story-img { order: 2; }
+      }
+      .story-img { background: #eee; }
+      .story-img :global(picture),
+      .story-img :global(img) { width: 100%; height: auto; }
+      .story-body p {
+        margin: 0 0 18px;
+        max-width: 50ch;
+      }
+      .story-body p:first-of-type::first-letter {
+        font-family: var(--serif);
+        font-weight: 700;
+        font-size: 4.5rem;
+        line-height: 0.9;
+        float: left;
+        padding: 6px 12px 0 0;
+        color: var(--accent);
+      }
+      .story-tag {
+        display: inline-block;
+        margin-top: 18px;
+        padding: 4px 10px;
+        background: transparent;
+        border: 1px solid var(--rule);
+        font: 11px/1.6 var(--sans);
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        color: var(--fg-muted);
+      }
+      .story-exif {
+        margin-top: 24px;
+        padding: 16px 0;
+        border-top: 1px solid var(--rule);
+        border-bottom: 1px solid var(--rule);
+        display: grid;
+        grid-template-columns: max-content 1fr;
+        gap: 4px 16px;
+        font: 13px/1.5 var(--sans);
+      }
+      .story-exif dt {
+        color: var(--fg-muted);
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        font-size: 11px;
+      }
+      .story-exif dd { margin: 0; }
+
+      /* Pull quote */
+      .pull-quote {
+        max-width: 800px;
+        margin: 80px auto;
+        padding: 0 clamp(24px, 5vw, 48px);
+        text-align: center;
+      }
+      .pull-quote blockquote {
+        font-family: var(--serif);
+        font-style: italic;
+        font-size: clamp(1.4rem, 3vw, 2rem);
+        line-height: 1.4;
+        font-weight: 400;
+        color: var(--fg);
+        margin: 0;
+        padding: 32px 0;
+        border-top: 1px solid var(--rule);
+        border-bottom: 1px solid var(--rule);
+      }
+      .pull-quote cite {
+        display: block;
+        margin-top: 18px;
+        font: 11px/1 var(--sans);
+        letter-spacing: 0.2em;
+        text-transform: uppercase;
+        color: var(--fg-muted);
+        font-style: normal;
+      }
+
+      footer.colophon {
+        max-width: 1200px;
+        margin: 120px auto 60px;
+        padding: 0 clamp(24px, 5vw, 48px);
+        border-top: 1px solid var(--rule);
+        padding-top: 32px;
+        font: 12px/1.6 var(--sans);
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        color: var(--fg-muted);
+        display: flex;
+        justify-content: space-between;
+        flex-wrap: wrap;
+        gap: 16px;
+      }
+    </style>
+  </head>
+  <body>
+    <a class="lab-nav" href={`${base}/lab/`}>← Lab</a>
+
+    <header class="masthead">
+      <p class="kicker">Tomás González Cifuentes · Fotografía de naturaleza</p>
+      <h1 class="title">Crónicas del sur</h1>
+      <p class="subtitle">
+        Una colección de imágenes y observaciones desde los bosques templados
+        hasta los campos de hielo de la Patagonia.
+      </p>
+      <p class="meta-line">Volumen I — Otoño 2026</p>
+    </header>
+
+    {hero && heroImg && (
+      <section class="hero-section">
+        <div class="hero-img-wrap">
+          <Picture
+            src={hero.data.image}
+            formats={['avif', 'webp']}
+            widths={[1200, 2400]}
+            sizes="100vw"
+            alt={hero.data.title_es}
+            loading="eager"
+          />
+        </div>
+        <div class="hero-caption">
+          <p class="kicker">Apertura</p>
+          <h2 class="h-title">{hero.data.title_es}</h2>
+          <p class="h-byline">Fotografía · Tomás González Cifuentes</p>
+        </div>
+      </section>
+    )}
+
+    <article class="pull-quote">
+      <blockquote>
+        "Mirar la naturaleza con paciencia es la única forma de aprender a verla.
+        Las aves no llegan cuando uno las espera; aparecen cuando uno deja de buscar."
+      </blockquote>
+      <cite>Cuaderno de notas, primavera 2025</cite>
+    </article>
+
+    {stories.map((photo, i) => {
+      const data = photo.data;
+      const num = String(i + 1).padStart(2, '0');
+      const exif = data.exif;
+      const loc = [data.location.city, data.location.region].filter(Boolean).join(', ');
+      return (
+        <article class="story">
+          <p class="story-num">Capítulo {num} · {data.category === 'aves' ? 'Aves' : 'Paisajes'}</p>
+          <h2 class="story-title">{data.title_es}</h2>
+          {data.species_common_es && (
+            <p class="story-deck">{data.species_common_es}{data.species_scientific && <em> ({data.species_scientific})</em>}</p>
+          )}
+          <div class="story-layout">
+            <figure class="story-img">
+              <Picture
+                src={data.image}
+                formats={['avif', 'webp']}
+                widths={[800, 1600]}
+                sizes="(min-width: 900px) 700px, 100vw"
+                alt={data.title_es}
+                loading="lazy"
+              />
+            </figure>
+            <div class="story-body">
+              <p>{data.description_es || 'Sin descripción detallada por ahora. Cuando completes el frontmatter de esta foto, este texto se llena con tu propia historia.'}</p>
+              {loc && <span class="story-tag">{loc}</span>}
+              <dl class="story-exif">
+                {data.camera.model && (<><dt>Cámara</dt><dd>{data.camera.model}</dd></>)}
+                {data.camera.lens && (<><dt>Objetivo</dt><dd>{data.camera.lens}</dd></>)}
+                {exif.aperture && (<><dt>Apertura</dt><dd>{exif.aperture}</dd></>)}
+                {exif.shutter_speed && (<><dt>Obturación</dt><dd>{exif.shutter_speed}</dd></>)}
+                {exif.iso && (<><dt>ISO</dt><dd>{exif.iso}</dd></>)}
+                {exif.focal_length && (<><dt>Focal</dt><dd>{exif.focal_length}</dd></>)}
+              </dl>
+            </div>
+          </div>
+        </article>
+      );
+    })}
+
+    <footer class="colophon">
+      <span>© 2026 Tomás González Cifuentes</span>
+      <span>Variante A — Editorial</span>
+    </footer>
+  </body>
+</html>

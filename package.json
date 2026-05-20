@@ -15,7 +15,11 @@
   "dependencies": {
     "@astrojs/rss": "^4.0.18",
     "@astrojs/sitemap": "^3.2.1",
+    "@fontsource/cormorant-garamond": "^5.2.11",
+    "@fontsource/inter": "^5.2.8",
+    "@fontsource/jetbrains-mono": "^5.2.8",
     "@fontsource/playfair-display": "^5.1.0",
+    "@fontsource/source-serif-4": "^5.2.9",
     "@types/leaflet": "^1.9.21",
     "astro": "^6.3.3",
     "leaflet": "^1.9.4",
