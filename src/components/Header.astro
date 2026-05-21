@@ -15,30 +15,38 @@ const base = import.meta.env.BASE_URL.replace(/\/$/, '');
 const currentPath = Astro.url.pathname.replace(base, '').replace(/^\/(es|en)/, '');
 const otherLocaleHref = `${base}/${otherLocale}${currentPath || '/'}`;
 
+const home = `${base}/${locale}/`;
+
+// PORTADA, AVES y PAISAJES apuntan a la home — AVES/PAISAJES con hash que el
+// script de la home lee como filtro in-page. Desde otras páginas (sobre-mí,
+// contacto) el click navega a la home y aplica el filtro al cargar.
 const nav = [
-  { href: `${base}/${locale}/`, label: t('nav.home') },
-  { href: `${base}/${locale}/aves/`, label: t('nav.birds') },
-  { href: `${base}/${locale}/paisajes/`, label: t('nav.landscapes') },
-  { href: `${base}/${locale}/mapa/`, label: t('nav.map') },
-  { href: `${base}/${locale}/sobre-mi/`, label: t('nav.about') },
-  { href: `${base}/${locale}/contacto/`, label: t('nav.contact') },
+  { href: home, label: t('nav.home'), filter: 'all' },
+  { href: `${home}#aves`, label: t('nav.birds'), filter: 'aves' },
+  { href: `${home}#paisajes`, label: t('nav.landscapes'), filter: 'paisajes' },
+  { href: `${base}/${locale}/sobre-mi/`, label: t('nav.about'), filter: null },
+  { href: `${base}/${locale}/contacto/`, label: t('nav.contact'), filter: null },
 ];
 ---
 
 <header class="site-header">
-  <div class="brand-block">
-    <a class="brand" href={`${base}/${locale}/`}>
-      <span class="brand-name">Tomás González Cifuentes</span>
-      <span class="brand-sub">{t('brand.subtitle')}</span>
-    </a>
-  </div>
+  <a class="brand" href={home}>
+    <span class="brand-name">Tomás González Cifuentes</span>
+    <span class="brand-sub">{t('brand.subtitle')}</span>
+  </a>
 
-  <nav class="site-nav" aria-label="Principal">
+  <nav class="site-nav" aria-label="Principal" data-locale={locale}>
     {nav.map((item) => {
-      const isActive = Astro.url.pathname === item.href || Astro.url.pathname === item.href.replace(/\/$/, '');
+      const pathOnly = item.href.split('#')[0];
+      // "Activo" por ruta. El filtro activo lo marca el JS en la home.
+      const isActive =
+        item.filter === null &&
+        (Astro.url.pathname === pathOnly ||
+          Astro.url.pathname === pathOnly.replace(/\/$/, ''));
       return (
         <a
           href={item.href}
+          data-filter={item.filter ?? ''}
           aria-current={isActive ? 'page' : undefined}
           class:list={[{ active: isActive }]}
         >
@@ -66,68 +74,66 @@ const nav = [
 
 <style>
   .site-header {
-    text-align: center;
-    padding: clamp(48px, 7vw, 80px) 24px 0;
-    position: relative;
-  }
-
-  .brand-block {
-    margin: 0 auto;
+    display: flex;
+    align-items: center;
+    gap: 24px;
+    padding: 18px clamp(16px, 3vw, 32px);
+    border-bottom: 1px solid var(--border);
+    flex-wrap: wrap;
   }
 
   .brand {
     display: inline-flex;
     flex-direction: column;
-    line-height: 1.2;
+    line-height: 1.15;
     border: 0;
-    text-align: center;
+    text-decoration: none;
+    color: inherit;
+    flex-shrink: 0;
   }
   .brand-name {
     font-weight: 300;
-    font-size: clamp(1.5rem, 3.2vw, 2.2rem);
-    letter-spacing: -0.015em;
-    margin-bottom: 8px;
+    font-size: clamp(1.1rem, 2vw, 1.5rem);
+    letter-spacing: -0.01em;
   }
   .brand-sub {
-    font-size: 11px;
+    font-size: 10px;
     font-weight: 500;
-    letter-spacing: 0.3em;
+    letter-spacing: 0.28em;
     text-transform: uppercase;
     color: var(--fg-muted);
-    margin-bottom: 28px;
+    margin-top: 4px;
   }
 
   .site-nav {
+    flex: 1;
     display: flex;
     justify-content: center;
     flex-wrap: wrap;
     gap: clamp(14px, 2.5vw, 32px);
-    padding: 16px 0 24px;
     font-size: 12px;
     font-weight: 500;
     letter-spacing: 0.18em;
     text-transform: uppercase;
     color: var(--fg-muted);
-    border-top: 1px solid var(--border);
-    border-bottom: 1px solid var(--border);
-    max-width: 880px;
-    margin: 0 auto;
   }
   .site-nav a {
     border: 0;
     transition: color 160ms ease;
+    cursor: pointer;
   }
-  .site-nav a:hover, .site-nav a.active { color: var(--fg); opacity: 1; }
-  /* Compensa el letter-spacing trailing del último item para centrado visual exacto */
-  .site-nav a:last-child { margin-inline-end: -0.18em; }
+  .site-nav a:hover,
+  .site-nav a.active,
+  .site-nav a.filter-active {
+    color: var(--fg);
+    opacity: 1;
+  }
 
   .toggles {
-    position: fixed;
-    top: 16px; right: 16px;
-    z-index: 30;
     display: flex;
     gap: 8px;
     align-items: center;
+    flex-shrink: 0;
   }
   .toggle {
     background: var(--bg);
@@ -151,11 +157,22 @@ const nav = [
     line-height: 1;
     padding: 6px 9px;
   }
+
+  /* En pantallas chicas el nav cae a una segunda fila, el brand y los toggles
+     se quedan en la primera. */
+  @media (max-width: 640px) {
+    .site-nav {
+      flex: 1 0 100%;
+      order: 3;
+      justify-content: flex-start;
+      gap: 14px;
+      padding-top: 4px;
+    }
+  }
 </style>
 
 <script>
   // Toggle de tema con persistencia en localStorage.
-  // LIGHT es el default cuando no hay preferencia guardada.
   const KEY = 'galeria-theme';
   const root = document.documentElement;
 
@@ -166,7 +183,7 @@ const nav = [
   function current(): 'light' | 'dark' {
     const stored = localStorage.getItem(KEY);
     if (stored === 'light' || stored === 'dark') return stored;
-    return 'light'; // default fijo, no respeta prefers-color-scheme
+    return 'light';
   }
 
   apply(current());

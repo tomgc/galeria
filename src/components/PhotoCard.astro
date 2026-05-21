@@ -50,6 +50,8 @@ const fallbackSpan = Math.max(1, Math.ceil((fallbackHeight + 12) / 16));
 <figure
   class:list={['card', { wide, portrait: isPortrait, tall: isTall, panorama: isPanorama }]}
   data-info-open="false"
+  data-category={data.category}
+  data-tags={data.tags.join(' ')}
   style={`--ratio: ${aspectRatio}; grid-row-end: span ${fallbackSpan};`}
 >
   <a
@@ -109,7 +111,7 @@ const fallbackSpan = Math.max(1, Math.ceil((fallbackHeight + 12) / 16));
       {data.tags.length > 0 && (
         <div class="info-tags">
           {data.tags.map((tag) => (
-            <a class="info-tag" href={`${base}/${locale}/tags/${encodeURIComponent(tag)}/`}>{tag}</a>
+            <button type="button" class="info-tag" data-tag={tag}>{tag}</button>
           ))}
         </div>
       )}
@@ -285,8 +287,12 @@ const fallbackSpan = Math.max(1, Math.ceil((fallbackHeight + 12) / 16));
     font-size: 10px;
     letter-spacing: 0.04em;
     color: var(--fg-muted);
+    background: transparent;
+    font-family: inherit;
+    cursor: pointer;
+    transition: color 120ms, border-color 120ms;
   }
-  .info-tag:hover { color: var(--fg); opacity: 1; }
+  .info-tag:hover { color: var(--fg); border-color: var(--fg-muted); opacity: 1; }
 </style>
 
 <script>

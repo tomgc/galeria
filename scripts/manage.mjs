@@ -103,6 +103,7 @@ function formatFrontmatter(data) {
   lines.push('');
 
   lines.push(`featured: ${data.featured ? 'true' : 'false'}`);
+  if (data.hero) lines.push(`hero: true`);
   lines.push(`for_sale: ${data.for_sale ? 'true' : 'false'}`);
   if (data.price_usd != null) lines.push(`price_usd: ${data.price_usd}`);
   if (data.order != null) lines.push(`order: ${data.order}`);
@@ -228,6 +229,9 @@ function validatePhotoUpdate(body) {
   }
   if ('featured' in body && typeof body.featured !== 'boolean') {
     return 'featured debe ser boolean';
+  }
+  if ('hero' in body && typeof body.hero !== 'boolean') {
+    return 'hero debe ser boolean';
   }
   if ('order' in body && body.order !== null && typeof body.order !== 'number') {
     return 'order debe ser number o null';

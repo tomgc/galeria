@@ -58,7 +58,8 @@ const compactLabel = locale === 'es' ? 'compacta' : 'compact';
         <button class="ctl-chip" type="button" data-limit="all">{allLabel}</button>
       </div>
       <span class="ctl-count">
-        <span data-shown>{Math.min(24, photos.length)}</span> / {photos.length} {totalLabel}
+        <span data-shown>{Math.min(24, photos.length)}</span> /
+        <span data-total-shown>{photos.length}</span> {totalLabel}
       </span>
     </div>
 
@@ -300,16 +301,23 @@ const compactLabel = locale === 'es' ? 'compacta' : 'compact';
   function applyLimit(limit: number | 'all') {
     document.querySelectorAll<HTMLElement>('.gallery[data-masonry]').forEach((gallery) => {
       const cards = Array.from(gallery.children) as HTMLElement[];
-      const total = cards.length;
+      // Sólo se cuentan/paginan las cards que NO fueron descartadas por filtros
+      // externos (categoría, tag) de la página contenedora.
+      const eligible = cards.filter((c) => !c.classList.contains('filter-out'));
+      const total = eligible.length;
       const visible = limit === 'all' ? total : Math.min(limit, total);
-      cards.forEach((c, i) => c.classList.toggle('is-hidden', i >= visible));
+      // Limpiar is-hidden de las descartadas (display:none ya las saca)
+      cards.forEach((c) => {
+        if (c.classList.contains('filter-out')) c.classList.remove('is-hidden');
+      });
+      eligible.forEach((c, i) => c.classList.toggle('is-hidden', i >= visible));
 
-      // Actualizar contador
       const ctl = document.querySelector(`.controls[data-controls-for='${gallery.id}']`);
       const shown = ctl?.querySelector('[data-shown]');
+      const totalEl = ctl?.querySelector('[data-total-shown]');
       if (shown) shown.textContent = String(visible);
+      if (totalEl) totalEl.textContent = String(total);
 
-      // Mostrar/ocultar botón "Ver más"
       const moreWrap = document.querySelector<HTMLElement>(
         `.more[data-more-for='${gallery.id}']`,
       );
@@ -322,6 +330,11 @@ const compactLabel = locale === 'es' ? 'compacta' : 'compact';
     });
     window.dispatchEvent(new Event('gallery:relayout'));
   }
+
+  // Las páginas que contengan la galería pueden disparar este evento cuando
+  // cambien un filtro externo (categoría, tag, etc.) para que la paginación
+  // y el contador se reajusten.
+  window.addEventListener('gallery:filter-changed', () => applyLimit(readLimit()));
 
   function setupControls() {
     applyDensity(readDensity());

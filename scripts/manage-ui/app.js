@@ -116,6 +116,7 @@ function openPanel(slug) {
   $('input[name="country"]', editForm).value = loc.country || 'Chile';
   $('textarea[name="description_es"]', editForm).value = p.data.description_es || '';
   $('input[name="featured"]', editForm).checked = !!p.data.featured;
+  $('input[name="hero"]', editForm).checked = !!p.data.hero;
   toggleSpeciesBlock();
   formStatus.textContent = '';
   formStatus.classList.remove('error');
@@ -162,6 +163,7 @@ editForm.addEventListener('submit', async (e) => {
     },
     description_es: (fd.get('description_es') || '').trim(),
     featured: fd.get('featured') === 'on',
+    hero: fd.get('hero') === 'on',
   };
 
   formStatus.textContent = 'Guardando…';

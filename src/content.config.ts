@@ -63,6 +63,11 @@ const photos = defineCollection({
 
       featured: z.boolean().default(false),
 
+      // Hero opcional: si está en true, esta foto se usa como portada
+      // grande de su categoría (aves o paisajes). Si hay varias con hero en
+      // una misma categoría, gana la primera por `order`+`date_taken`.
+      hero: z.boolean().default(false),
+
       // Orden manual (opcional). Las fotos con `order` se muestran primero,
       // ascendente. Las que no tienen `order` van después, por date_taken desc.
       // Lo asigna el gestor `npm run manage` al reordenar por arrastre.

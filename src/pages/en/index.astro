@@ -6,43 +6,152 @@ import Lightbox from '../../components/Lightbox.astro';
 import { getAllPhotos } from '../../lib/photos';
 
 const all = await getAllPhotos();
-const featured = all.filter((p) => p.data.featured);
 
-const hero = featured[0] ?? null;
-const gridPhotos = hero
-  ? [...featured.slice(1), ...all.filter((p) => !p.data.featured)].slice(0, 11)
-  : all.slice(0, 12);
+const heroBirds = all.find((p) => p.data.hero && p.data.category === 'aves') ?? null;
+const heroLandscapes = all.find((p) => p.data.hero && p.data.category === 'paisajes') ?? null;
 
-const heroGalleryId = 'hero-gallery-en';
+const tagCounts: Record<string, number> = {};
+for (const p of all) {
+  for (const tag of p.data.tags) tagCounts[tag] = (tagCounts[tag] ?? 0) + 1;
+}
+const tags = Object.entries(tagCounts).sort((a, b) => b[1] - a[1]);
+
+const galleryId = 'home-gallery-en';
 ---
 
 <BaseLayout locale="en" title="Home">
-  <section class="intro">
-    <h1>Nature photography</h1>
-    <p class="lead">
-      Birds and landscapes from southern Chile and Patagonia. A patient look at
-      the natural world, captured in original photographs.
-    </p>
-    <p class="note">
-      <em>The English version of this site is still being translated. Some
-      sections may appear in Spanish.</em>
-    </p>
-  </section>
+  <div class="heroes" data-heroes>
+    {heroBirds && (
+      <div data-hero-category="aves"><Hero photo={heroBirds} locale="en" /></div>
+    )}
+    {heroLandscapes && (
+      <div data-hero-category="paisajes"><Hero photo={heroLandscapes} locale="en" /></div>
+    )}
+  </div>
 
-  {hero && (
-    <div id={heroGalleryId}>
-      <Hero photo={hero} locale="en" />
-      <Lightbox gallerySelector={`#${heroGalleryId}`} />
+  {tags.length > 0 && (
+    <div class="tag-chips" data-tag-chips>
+      <button class="tag-chip" type="button" data-tag="" aria-pressed="true">All</button>
+      {tags.map(([tag, count]) => (
+        <button class="tag-chip" type="button" data-tag={tag}>
+          #{tag} <span class="tag-count">{count}</span>
+        </button>
+      ))}
     </div>
   )}
 
-  {gridPhotos.length > 0 && (
-    <Gallery photos={gridPhotos} locale="en" eagerCount={hero ? 2 : 4} />
-  )}
+  <div id={galleryId}>
+    <Gallery photos={all} locale="en" eagerCount={heroBirds || heroLandscapes ? 0 : 4} />
+    <Lightbox gallerySelector={`#${galleryId}`} />
+  </div>
 </BaseLayout>
 
 <style>
-  .intro { margin-bottom: 32px; max-width: 70ch; }
-  .lead { font-size: 1.1rem; color: var(--fg-muted); margin: 0 0 12px; }
-  .note { font-size: 0.85rem; color: var(--fg-muted); }
+  .heroes { display: flex; flex-direction: column; gap: 0; }
+  .tag-chips { display: flex; flex-wrap: wrap; gap: 6px; margin: 24px 0 12px; }
+  .tag-chip {
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--fg-muted);
+    padding: 4px 10px;
+    font: inherit;
+    font-size: 11px;
+    letter-spacing: 0.04em;
+    cursor: pointer;
+    transition: color 120ms, border-color 120ms, background 120ms;
+    border-radius: 999px;
+  }
+  .tag-chip:hover { color: var(--fg); border-color: var(--fg-muted); }
+  .tag-chip[aria-pressed='true'] {
+    background: var(--fg);
+    color: var(--bg);
+    border-color: var(--fg);
+  }
+  .tag-count { opacity: 0.6; font-size: 10px; margin-left: 2px; }
 </style>
+
+<script>
+  type Cat = 'all' | 'aves' | 'paisajes';
+  const state = { cat: 'all' as Cat, tag: '' };
+
+  function readCatFromHash(): Cat {
+    const h = location.hash.replace('#', '');
+    return h === 'aves' || h === 'paisajes' ? h : 'all';
+  }
+
+  function applyFilters() {
+    document.querySelectorAll<HTMLElement>('[data-heroes] [data-hero-category]').forEach((h) => {
+      const cat = h.dataset.heroCategory;
+      h.style.display = state.cat === 'all' || state.cat === cat ? '' : 'none';
+    });
+
+    document.querySelectorAll<HTMLElement>('.gallery .card').forEach((card) => {
+      const cat = card.dataset.category;
+      const tags = (card.dataset.tags || '').split(/\s+/).filter(Boolean);
+      const passCat = state.cat === 'all' || cat === state.cat;
+      const passTag = !state.tag || tags.includes(state.tag);
+      card.classList.toggle('filter-out', !(passCat && passTag));
+    });
+
+    document.querySelectorAll<HTMLElement>('.site-nav a[data-filter]').forEach((a) => {
+      const f = a.dataset.filter;
+      a.classList.toggle('filter-active', f === state.cat);
+    });
+
+    document.querySelectorAll<HTMLButtonElement>('[data-tag-chips] [data-tag]').forEach((b) => {
+      b.setAttribute('aria-pressed', b.dataset.tag === state.tag ? 'true' : 'false');
+    });
+
+    window.dispatchEvent(new Event('gallery:filter-changed'));
+  }
+
+  function init() {
+    state.cat = readCatFromHash();
+    applyFilters();
+
+    window.addEventListener('hashchange', () => {
+      state.cat = readCatFromHash();
+      applyFilters();
+    });
+
+    document.querySelectorAll<HTMLButtonElement>('[data-tag-chips] [data-tag]').forEach((b) => {
+      b.addEventListener('click', () => {
+        state.tag = b.dataset.tag || '';
+        applyFilters();
+      });
+    });
+
+    document.querySelectorAll<HTMLAnchorElement>('.site-nav a[data-filter]').forEach((a) => {
+      a.addEventListener('click', (e) => {
+        const samePath =
+          a.pathname === location.pathname ||
+          a.pathname === location.pathname + '/' ||
+          a.pathname + '/' === location.pathname;
+        if (!samePath) return;
+        e.preventDefault();
+        const f = a.dataset.filter || 'all';
+        location.hash = f === 'all' ? '' : f;
+        if (f === 'all' && location.hash === '') {
+          state.cat = 'all';
+          applyFilters();
+        }
+      });
+    });
+
+    document.addEventListener('click', (e) => {
+      const target = e.target as HTMLElement;
+      const btn = target.closest<HTMLButtonElement>('.info-tag[data-tag]');
+      if (!btn) return;
+      e.preventDefault();
+      state.tag = btn.dataset.tag || '';
+      applyFilters();
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    });
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', init);
+  } else {
+    init();
+  }
+</script>
