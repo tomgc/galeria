@@ -61,11 +61,11 @@ const decorated = photos.map((p) => {
     --cols-md: 2;
     --cols-lg: 3;
   }
-  /* Compacta: aproximadamente el doble de columnas → fotos a media altura. */
+  /* Compacta: fotos pequeñas y juntas, claramente distintas de "amplia". */
   .gallery.density-compact {
-    --cols-sm: 2;
-    --cols-md: 4;
-    --cols-lg: 6;
+    --cols-sm: 3;
+    --cols-md: 6;
+    --cols-lg: 8;
   }
   /* En compacta, las panorámicas dejan de ensancharse a 2 cols (quedan
      desproporcionadamente grandes con el grid denso). */
@@ -83,7 +83,11 @@ const decorated = photos.map((p) => {
     .gallery { grid-template-columns: repeat(var(--cols-lg), 1fr); }
   }
 
-  .gallery > .is-hidden, .gallery > .filter-out { display: none; }
+  /* Astro scopea las clases al cid del componente que las declara. .card
+     viene de PhotoCard con su propio cid; sin :global() el selector no
+     matchea y las cards filtradas siguen visibles ocupando columnas. */
+  .gallery > :global(.card.is-hidden),
+  .gallery > :global(.card.filter-out) { display: none !important; }
 
   .infinite-sentinel {
     height: 1px;
