@@ -27,6 +27,10 @@
 - `@fontsource/playfair-display` (self-hosted)
 - Sharp + exifr para ingesta
 - Deploy: GitHub Actions → GitHub Pages en `https://tomgc.github.io/galeria/`
+- Gestor local de fotos: `npm run manage` (Express + UI vanilla + SortableJS).
+  Abre `http://localhost:4322` para editar metadatos, borrar, reordenar y
+  publicar al sitio. Sólo gestiona; para subir fotos nuevas seguir usando
+  `npm run ingest`.
 
 ## Criterios de calidad
 - `npm run build` sin warnings (warning informativo de "no files found" en photos es OK mientras no haya fotos cargadas).
@@ -35,8 +39,8 @@
 - Correo NUNCA en texto plano en el HTML renderizado.
 
 ## Últimos cambios
+- 2026-05-20 — Gestor local de fotos (`npm run manage`): UI web en `localhost:4322` para editar título/categoría/tags/especie/ubicación/descripción, borrar (mueve a `_trash/`, recuperable), reordenar por arrastre y publicar al sitio (commit+push). Schema extendido con campo `order` opcional; el sort respeta `order` ascendente y cae a `date_taken` desc cuando no hay.
 - 2026-05-20 — Completados los metadatos de las 27 fotos restantes (46/46). Viaje a Costa Rica incorporado (quetzal, búho de anteojos, perezoso, dos colibríes), Patagonia austral (camino a cordillera, loica, aguiluchos sobre bosque de lenga), aves costeras chilenas (rayador, perritos), y nuevos identificados (martín pescador grande macho/hembra, pitío, golondrina chilena).
 - 2026-05-20 — `scripts/update-photo-metadata.py` extendido a 46 detecciones; ejecutarlo regenera todos los `.md` preservando EXIF.
 - e262454 — chore: persistir script de update de metadatos para uso posterior.
 - a9c3efc — feat: primeras fotos reales — 46 ingeridas, 19 con metadatos completos.
-- b67cf1b — fix(a11y): regresión introducida en el port de F.

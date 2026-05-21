@@ -1,0 +1,161 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Gestor de fotos · galería</title>
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body>
+    <header class="topbar">
+      <div class="topbar-left">
+        <span class="logo">🌿 Gestor de fotos</span>
+        <span class="count" id="count">0 fotos</span>
+      </div>
+      <div class="topbar-right">
+        <span class="pending" id="pending"></span>
+        <button id="publish" class="btn btn-primary" disabled>
+          Publicar al sitio
+        </button>
+      </div>
+    </header>
+
+    <nav class="filters">
+      <button class="chip active" data-filter="all">Todas</button>
+      <button class="chip" data-filter="aves">Aves</button>
+      <button class="chip" data-filter="paisajes">Paisajes</button>
+      <button class="chip" data-filter="featured">Destacadas</button>
+      <input
+        type="search"
+        id="search"
+        class="search"
+        placeholder="Buscar por título o slug…"
+        autocomplete="off"
+      />
+      <span class="hint" id="reorderHint">Arrastra las fotos para reordenarlas. El orden se guarda al publicar.</span>
+    </nav>
+
+    <main id="grid" class="grid"></main>
+
+    <aside id="panel" class="panel" hidden>
+      <div class="panel-inner">
+        <header class="panel-head">
+          <button id="closePanel" class="iconbtn" title="Cerrar">×</button>
+          <span id="panelSlug" class="slug-mono"></span>
+        </header>
+
+        <figure class="panel-preview">
+          <img id="panelImg" alt="" />
+        </figure>
+
+        <form id="editForm" class="form">
+          <label>
+            <span>Título</span>
+            <input name="title_es" required />
+          </label>
+
+          <fieldset class="radios">
+            <legend>Categoría</legend>
+            <label class="radio">
+              <input type="radio" name="category" value="aves" /> Aves
+            </label>
+            <label class="radio">
+              <input type="radio" name="category" value="paisajes" /> Paisajes
+            </label>
+          </fieldset>
+
+          <label>
+            <span>Tags <small>(separados por coma)</small></span>
+            <input name="tags" placeholder="ej: condor, cordillera, andes" />
+          </label>
+
+          <div id="speciesBlock" class="block-aves">
+            <label>
+              <span>Especie (español)</span>
+              <input name="species_common_es" />
+            </label>
+            <label>
+              <span>Especie (inglés)</span>
+              <input name="species_common_en" />
+            </label>
+            <label>
+              <span>Nombre científico</span>
+              <input name="species_scientific" placeholder="ej: Vultur gryphus" />
+            </label>
+          </div>
+
+          <fieldset class="loc">
+            <legend>Ubicación</legend>
+            <label>
+              <span>Ciudad / lugar</span>
+              <input name="city" />
+            </label>
+            <label>
+              <span>Región</span>
+              <input name="region" />
+            </label>
+            <label>
+              <span>País</span>
+              <input name="country" placeholder="Chile" />
+            </label>
+          </fieldset>
+
+          <label>
+            <span>Descripción</span>
+            <textarea name="description_es" rows="4"></textarea>
+          </label>
+
+          <label class="check">
+            <input type="checkbox" name="featured" />
+            <span>Destacada (aparece en portada)</span>
+          </label>
+
+          <div class="actions">
+            <button type="submit" class="btn btn-primary">Guardar</button>
+            <button type="button" id="deleteBtn" class="btn btn-danger">Borrar foto…</button>
+          </div>
+          <p id="formStatus" class="form-status"></p>
+        </form>
+      </div>
+    </aside>
+
+    <div id="toast" class="toast" hidden></div>
+
+    <dialog id="confirmDelete">
+      <form method="dialog">
+        <h2>Borrar foto del repositorio</h2>
+        <p id="confirmDeleteMsg"></p>
+        <p>
+          Esto elimina el <code>.md</code> y el <code>.jpg</code> del disco.
+          Se hace efectivo en el sitio al publicar.
+          Para confirmar, escribe el slug:
+        </p>
+        <input id="confirmDeleteInput" autocomplete="off" />
+        <menu>
+          <button value="cancel" class="btn">Cancelar</button>
+          <button value="confirm" id="confirmDeleteOk" class="btn btn-danger" disabled>
+            Sí, borrar
+          </button>
+        </menu>
+      </form>
+    </dialog>
+
+    <dialog id="confirmPublish">
+      <form method="dialog">
+        <h2>Publicar al sitio</h2>
+        <p id="confirmPublishMsg"></p>
+        <label>
+          <span>Mensaje del commit</span>
+          <input id="commitMsg" autocomplete="off" />
+        </label>
+        <menu>
+          <button value="cancel" class="btn">Cancelar</button>
+          <button value="confirm" class="btn btn-primary">Publicar</button>
+        </menu>
+      </form>
+    </dialog>
+
+    <script src="/vendor/sortable.js"></script>
+    <script src="/app.js" type="module"></script>
+  </body>
+</html>

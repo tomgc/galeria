@@ -2,12 +2,21 @@ import { getCollection, type CollectionEntry } from 'astro:content';
 
 export type Photo = CollectionEntry<'photos'>;
 
-/** Devuelve todas las fotos ordenadas por fecha descendente. */
+/**
+ * Devuelve todas las fotos en orden de presentación:
+ *   1. Las que tienen `order` numérico, ascendente (promovidas desde el gestor).
+ *   2. El resto por `date_taken` descendente (más recientes primero).
+ */
 export async function getAllPhotos(): Promise<Photo[]> {
   const all = await getCollection('photos');
-  return all.sort(
-    (a, b) => new Date(b.data.date_taken).getTime() - new Date(a.data.date_taken).getTime(),
-  );
+  return all.sort((a, b) => {
+    const ao = a.data.order;
+    const bo = b.data.order;
+    if (ao !== undefined && bo !== undefined) return ao - bo;
+    if (ao !== undefined) return -1;
+    if (bo !== undefined) return 1;
+    return new Date(b.data.date_taken).getTime() - new Date(a.data.date_taken).getTime();
+  });
 }
 
 /** Lista de tags únicos con su conteo. */

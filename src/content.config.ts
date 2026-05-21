@@ -63,6 +63,11 @@ const photos = defineCollection({
 
       featured: z.boolean().default(false),
 
+      // Orden manual (opcional). Las fotos con `order` se muestran primero,
+      // ascendente. Las que no tienen `order` van después, por date_taken desc.
+      // Lo asigna el gestor `npm run manage` al reordenar por arrastre.
+      order: z.number().int().min(0).optional(),
+
       // Fase futura — siempre false por ahora
       for_sale: z.boolean().default(false),
       price_usd: z.number().positive().optional(),

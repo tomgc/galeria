@@ -30,3 +30,7 @@ pnpm-debug.log*
 _inbox/*
 !_inbox/.gitkeep
 lighthouse-report.json
+
+# papelera del gestor: fotos borradas via `npm run manage` se mueven aquí
+# antes de eliminarse de verdad. Vaciable a mano cuando ya no se necesite.
+_trash/
