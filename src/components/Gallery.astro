@@ -19,13 +19,21 @@ const galleryId = `gallery-${Math.random().toString(36).slice(2, 8)}`;
 // Calcula cuántas columnas debe abarcar cada card según su aspect ratio.
 // - Panorámicas (>1.8:1, más anchas que 16:9): 2 columnas para que respiren.
 // - Resto: 1 columna.
-// Si solo hay 1 foto, no la ensanchamos (no tiene con qué contrastar).
 const PANORAMA_THRESHOLD = 1.8;
 const decorated = photos.map((p) => {
   const ratio = p.data.image.width / p.data.image.height;
   const wide = ratio > PANORAMA_THRESHOLD && photos.length > 1;
   return { photo: p, wide, ratio };
 });
+
+const totalLabel = locale === 'es' ? 'fotos' : 'photos';
+const densityLabel = locale === 'es' ? 'Vista' : 'View';
+const showLabel = locale === 'es' ? 'Mostrar' : 'Show';
+const seeMore = locale === 'es' ? 'Ver más' : 'See more';
+const allLabel = locale === 'es' ? 'todas' : 'all';
+const looseLabel = locale === 'es' ? 'amplia' : 'spacious';
+const normalLabel = locale === 'es' ? 'normal' : 'normal';
+const compactLabel = locale === 'es' ? 'compacta' : 'compact';
 ---
 
 {photos.length === 0 ? (
@@ -35,7 +43,26 @@ const decorated = photos.map((p) => {
   </div>
 ) : (
   <>
-    <div id={galleryId} class="gallery" data-masonry>
+    <div class="controls" data-controls-for={galleryId}>
+      <div class="ctl-group">
+        <span class="ctl-label">{densityLabel}</span>
+        <button class="ctl-chip" type="button" data-density="loose">{looseLabel}</button>
+        <button class="ctl-chip" type="button" data-density="normal" aria-pressed="true">{normalLabel}</button>
+        <button class="ctl-chip" type="button" data-density="compact">{compactLabel}</button>
+      </div>
+      <div class="ctl-group">
+        <span class="ctl-label">{showLabel}</span>
+        <button class="ctl-chip" type="button" data-limit="24" aria-pressed="true">24</button>
+        <button class="ctl-chip" type="button" data-limit="48">48</button>
+        <button class="ctl-chip" type="button" data-limit="96">96</button>
+        <button class="ctl-chip" type="button" data-limit="all">{allLabel}</button>
+      </div>
+      <span class="ctl-count">
+        <span data-shown>{Math.min(24, photos.length)}</span> / {photos.length} {totalLabel}
+      </span>
+    </div>
+
+    <div id={galleryId} class="gallery density-normal" data-masonry data-total={photos.length}>
       {decorated.map(({ photo, wide }, i) => (
         <PhotoCard
           photo={photo}
@@ -45,27 +72,124 @@ const decorated = photos.map((p) => {
         />
       ))}
     </div>
+
+    <div class="more" data-more-for={galleryId} hidden>
+      <button type="button" class="more-btn">{seeMore}</button>
+    </div>
+
     <Lightbox gallerySelector={`#${galleryId}`} />
   </>
 )}
 
 <style>
+  /* Controles arriba del grid */
+  .controls {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 12px 20px;
+    margin-bottom: 20px;
+    padding: 10px 0;
+    border-top: 1px solid var(--border);
+    border-bottom: 1px solid var(--border);
+  }
+  .ctl-group {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+  .ctl-label {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--fg-faint);
+    margin-right: 6px;
+  }
+  .ctl-chip {
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--fg-muted);
+    padding: 4px 10px;
+    font: inherit;
+    font-size: 12px;
+    cursor: pointer;
+    border-radius: 0;
+    transition: color 120ms, border-color 120ms, background 120ms;
+  }
+  .ctl-chip:hover {
+    color: var(--fg);
+    border-color: var(--fg-muted);
+  }
+  .ctl-chip[aria-pressed='true'] {
+    background: var(--fg);
+    color: var(--bg);
+    border-color: var(--fg);
+  }
+  .ctl-count {
+    margin-left: auto;
+    font-size: 12px;
+    color: var(--fg-faint);
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* Grid principal — los cuántas columnas se controlan vía custom props
+     que cambian con la clase de densidad. */
   .gallery {
     display: grid;
     grid-template-columns: 1fr;
     grid-auto-rows: 4px;
     grid-auto-flow: dense;
     gap: var(--gap);
+
+    /* normal (default) */
+    --cols-sm: 2;
+    --cols-md: 3;
+    --cols-lg: 4;
+  }
+  .gallery.density-loose {
+    --cols-sm: 1;
+    --cols-md: 2;
+    --cols-lg: 3;
+  }
+  .gallery.density-compact {
+    --cols-sm: 3;
+    --cols-md: 5;
+    --cols-lg: 6;
   }
 
   @media (min-width: 640px) {
-    .gallery { grid-template-columns: repeat(2, 1fr); }
+    .gallery { grid-template-columns: repeat(var(--cols-sm), 1fr); }
   }
   @media (min-width: 1024px) {
-    .gallery { grid-template-columns: repeat(3, 1fr); }
+    .gallery { grid-template-columns: repeat(var(--cols-md), 1fr); }
   }
   @media (min-width: 1440px) {
-    .gallery { grid-template-columns: repeat(4, 1fr); }
+    .gallery { grid-template-columns: repeat(var(--cols-lg), 1fr); }
+  }
+
+  /* Card oculta por paginación: ocupa cero espacio en el grid. */
+  .gallery > .is-hidden {
+    display: none;
+  }
+
+  .more {
+    display: flex;
+    justify-content: center;
+    margin-top: 24px;
+  }
+  .more-btn {
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--fg);
+    padding: 10px 24px;
+    font: inherit;
+    font-size: 13px;
+    cursor: pointer;
+    transition: background 120ms, border-color 120ms;
+  }
+  .more-btn:hover {
+    background: var(--bg-elev);
+    border-color: var(--fg-muted);
   }
 
   .empty {
@@ -79,10 +203,7 @@ const decorated = photos.map((p) => {
 </style>
 
 <script>
-  // Masonry "real": cada card toma N filas según su altura renderizada.
-  // Recalcula al cargar y al cambiar viewport para que el packing sea perfecto.
-  // El aspect-ratio que aplicamos en PhotoCard nos da heights deterministas
-  // sin esperar a que las imágenes carguen.
+  // ── Masonry "real": cada card toma N filas según su altura medida. ──
   function setupMasonry() {
     const galleries = document.querySelectorAll<HTMLElement>('[data-masonry]');
     if (galleries.length === 0) return;
@@ -96,9 +217,7 @@ const decorated = photos.map((p) => {
         const cards = gallery.children;
         for (let i = 0; i < cards.length; i++) {
           const card = cards[i] as HTMLElement;
-          // Medimos thumb (con aspect-ratio) + meta + info (si está abierto).
-          // No medimos card.height directamente porque está constrained al
-          // row-span actual del grid.
+          if (card.classList.contains('is-hidden')) continue;
           const thumb = card.querySelector('.thumb') as HTMLElement | null;
           const meta = card.querySelector('.meta') as HTMLElement | null;
           const info = card.querySelector('.info') as HTMLElement | null;
@@ -115,31 +234,23 @@ const decorated = photos.map((p) => {
       }
     }
 
-    // Primer cálculo, después esperamos a que cualquier imagen lazy termine.
     applySpans();
 
-    // ResizeObserver de cada card: cuando una imagen termina de cargar el
-    // card crece y reaplicamos.
     const ro = new ResizeObserver(() => applySpans());
     for (const gallery of galleries) {
       for (const card of Array.from(gallery.children)) ro.observe(card);
     }
 
-    // Reaplicar al redimensionar viewport (cambio de breakpoint).
     let raf = 0;
     window.addEventListener('resize', () => {
       cancelAnimationFrame(raf);
       raf = requestAnimationFrame(applySpans);
     });
 
-    // Reaplicar cuando un accordion [+] abre/cierra — la altura del card cambia.
-    // Usamos MutationObserver sobre data-info-open en cada card.
     const cardObserver = new MutationObserver((records) => {
       const relevant = records.some((r) =>
         r.type === 'attributes' && r.attributeName === 'data-info-open');
       if (relevant) {
-        // Esperar a que la transición CSS empiece y luego al final para
-        // re-calcular después de cada paso (suaviza el masonry durante la animación).
         applySpans();
         setTimeout(applySpans, 300);
       }
@@ -149,11 +260,107 @@ const decorated = photos.map((p) => {
         cardObserver.observe(card, { attributes: true, attributeFilter: ['data-info-open'] });
       }
     }
+
+    // Reaplicar también cuando alguien dispara recálculo explícito.
+    window.addEventListener('gallery:relayout', () => {
+      applySpans();
+      setTimeout(applySpans, 60);
+    });
+  }
+
+  // ── Controles: densidad + paginación ──
+  // Persistencia global vía localStorage. Aplica a todas las galerías de la
+  // sesión (la home, /aves/, /paisajes/, /tags/...).
+  type Density = 'loose' | 'normal' | 'compact';
+  const DEFAULT_DENSITY: Density = 'normal';
+  const DEFAULT_LIMIT = 24;
+
+  function readDensity(): Density {
+    const v = localStorage.getItem('galeria.density') as Density | null;
+    return v === 'loose' || v === 'compact' ? v : DEFAULT_DENSITY;
+  }
+  function readLimit(): number | 'all' {
+    const v = localStorage.getItem('galeria.limit');
+    if (v === 'all') return 'all';
+    const n = parseInt(v || '', 10);
+    return Number.isFinite(n) && n > 0 ? n : DEFAULT_LIMIT;
+  }
+
+  function applyDensity(d: Density) {
+    document.querySelectorAll<HTMLElement>('.gallery').forEach((g) => {
+      g.classList.remove('density-loose', 'density-normal', 'density-compact');
+      g.classList.add(`density-${d}`);
+    });
+    document.querySelectorAll<HTMLButtonElement>('.controls [data-density]').forEach((b) => {
+      b.setAttribute('aria-pressed', b.dataset.density === d ? 'true' : 'false');
+    });
+    window.dispatchEvent(new Event('gallery:relayout'));
+  }
+
+  function applyLimit(limit: number | 'all') {
+    document.querySelectorAll<HTMLElement>('.gallery[data-masonry]').forEach((gallery) => {
+      const cards = Array.from(gallery.children) as HTMLElement[];
+      const total = cards.length;
+      const visible = limit === 'all' ? total : Math.min(limit, total);
+      cards.forEach((c, i) => c.classList.toggle('is-hidden', i >= visible));
+
+      // Actualizar contador
+      const ctl = document.querySelector(`.controls[data-controls-for='${gallery.id}']`);
+      const shown = ctl?.querySelector('[data-shown]');
+      if (shown) shown.textContent = String(visible);
+
+      // Mostrar/ocultar botón "Ver más"
+      const moreWrap = document.querySelector<HTMLElement>(
+        `.more[data-more-for='${gallery.id}']`,
+      );
+      if (moreWrap) moreWrap.hidden = visible >= total;
+    });
+    document.querySelectorAll<HTMLButtonElement>('.controls [data-limit]').forEach((b) => {
+      const val = b.dataset.limit;
+      const pressed = (limit === 'all' && val === 'all') || String(limit) === val;
+      b.setAttribute('aria-pressed', pressed ? 'true' : 'false');
+    });
+    window.dispatchEvent(new Event('gallery:relayout'));
+  }
+
+  function setupControls() {
+    applyDensity(readDensity());
+    applyLimit(readLimit());
+
+    document.querySelectorAll<HTMLButtonElement>('.controls [data-density]').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const d = btn.dataset.density as Density;
+        localStorage.setItem('galeria.density', d);
+        applyDensity(d);
+      });
+    });
+
+    document.querySelectorAll<HTMLButtonElement>('.controls [data-limit]').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const v = btn.dataset.limit!;
+        const limit = v === 'all' ? 'all' : parseInt(v, 10);
+        localStorage.setItem('galeria.limit', String(limit));
+        applyLimit(limit);
+      });
+    });
+
+    document.querySelectorAll<HTMLButtonElement>('.more-btn').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const current = readLimit();
+        const next = current === 'all' ? 'all' : current + 24;
+        localStorage.setItem('galeria.limit', String(next));
+        applyLimit(next);
+      });
+    });
   }
 
   if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', setupMasonry);
+    document.addEventListener('DOMContentLoaded', () => {
+      setupControls();
+      setupMasonry();
+    });
   } else {
+    setupControls();
     setupMasonry();
   }
 </script>

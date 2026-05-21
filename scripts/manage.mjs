@@ -213,6 +213,56 @@ function git(args) {
   });
 }
 
+// ── Auto-publish: batch tras 30s sin cambios ───────────────────────────────
+
+const AUTO_PUBLISH_DELAY_MS = 30_000;
+
+// Estado in-memory del auto-publish. Sólo persiste mientras el server vive.
+const auto = {
+  lastChangeAt: 0,   // ms epoch del último PUT/DELETE/reorder
+  publishing: false, // hay un push en curso
+  lastPublishedAt: 0,
+  lastError: null,   // string con el último error o null
+};
+let autoTimer = null;
+
+/** Marca que hubo un cambio en disco. Reinicia el countdown del auto-publish. */
+function markChange() {
+  auto.lastChangeAt = Date.now();
+  auto.lastError = null;
+  if (autoTimer) clearTimeout(autoTimer);
+  autoTimer = setTimeout(() => doAutoPublish(), AUTO_PUBLISH_DELAY_MS);
+}
+
+/** Hace commit + push si hay algo que publicar. Reentrante-seguro. */
+async function doPublish(message) {
+  if (auto.publishing) return { skipped: 'ya hay un push en curso' };
+  const dirty = await git(['status', '--porcelain']);
+  if (!dirty) return { skipped: 'no hay cambios' };
+  auto.publishing = true;
+  try {
+    await git(['add', 'src/content/photos', 'src/assets/photos']).catch(() => {});
+    await git(['commit', '-m', message]);
+    await git(['push']);
+    auto.lastPublishedAt = Date.now();
+    auto.lastError = null;
+    console.log(`[manage] ✓ publicado: "${message}"`);
+    return { ok: true };
+  } finally {
+    auto.publishing = false;
+  }
+}
+
+async function doAutoPublish() {
+  try {
+    const r = await doPublish('manage: cambios desde el gestor (auto)');
+    if (r.skipped) console.log(`[manage] auto-publish saltado: ${r.skipped}`);
+  } catch (e) {
+    auto.lastError = e.message;
+    console.error(`[manage] ✗ auto-publish falló: ${e.message}`);
+  }
+}
+
 // ── App ─────────────────────────────────────────────────────────────────────
 
 const app = express();
@@ -229,6 +279,7 @@ app.get('/api/photos', async (req, res) => {
 app.put('/api/photos/:slug', async (req, res) => {
   try {
     await writePhoto(req.params.slug, req.body || {});
+    markChange();
     console.log(`[manage] PUT ${req.params.slug}`);
     res.json({ ok: true });
   } catch (e) {
@@ -239,6 +290,7 @@ app.put('/api/photos/:slug', async (req, res) => {
 app.delete('/api/photos/:slug', async (req, res) => {
   try {
     await deletePhoto(req.params.slug);
+    markChange();
     res.json({ ok: true });
   } catch (e) {
     res.status(500).json({ error: e.message });
@@ -265,6 +317,7 @@ app.post('/api/reorder', async (req, res) => {
     for (let i = 0; i < slugs.length; i++) {
       await writePhoto(slugs[i], { order: i });
     }
+    markChange();
     console.log(`[manage] reorder de ${slugs.length} fotos`);
     res.json({ ok: true, n: slugs.length });
   } catch (e) {
@@ -276,22 +329,43 @@ app.get('/api/status', async (req, res) => {
   try {
     const out = await git(['status', '--porcelain']);
     const lines = out ? out.split('\n').filter(Boolean) : [];
-    res.json({ pendientes: lines.length, lineas: lines });
+    // Cuánto falta para el próximo auto-publish, en ms (negativo si ya pasó / null si no hay cambios)
+    const nextAutoIn =
+      lines.length === 0
+        ? null
+        : Math.max(0, auto.lastChangeAt + AUTO_PUBLISH_DELAY_MS - Date.now());
+    res.json({
+      pendientes: lines.length,
+      lineas: lines,
+      auto: {
+        publishing: auto.publishing,
+        nextAutoIn,
+        lastPublishedAt: auto.lastPublishedAt || null,
+        lastError: auto.lastError,
+        delayMs: AUTO_PUBLISH_DELAY_MS,
+      },
+    });
   } catch (e) {
     res.status(500).json({ error: e.message });
   }
 });
 
 app.post('/api/publish', async (req, res) => {
-  const message = String(req.body?.message || 'manage: cambios desde el gestor de fotos').slice(0, 500);
+  const message = String(
+    req.body?.message || 'manage: cambios desde el gestor de fotos',
+  ).slice(0, 500);
   try {
-    const before = await git(['status', '--porcelain']);
-    if (!before) return res.json({ ok: true, message: 'Nada que publicar.', publicado: false });
-    await git(['add', 'src/content/photos', 'src/assets/photos', 'CLAUDE.md']).catch(() => {});
-    await git(['commit', '-m', message]);
-    await git(['push']);
+    if (autoTimer) {
+      clearTimeout(autoTimer);
+      autoTimer = null;
+    }
+    const r = await doPublish(message);
+    if (r.skipped) {
+      return res.json({ ok: true, message: `Nada que publicar (${r.skipped}).`, publicado: false });
+    }
     res.json({ ok: true, message: 'Publicado al sitio.', publicado: true });
   } catch (e) {
+    auto.lastError = e.message;
     res.status(500).json({ error: e.message });
   }
 });

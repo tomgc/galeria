@@ -123,34 +123,17 @@
 
     <dialog id="confirmDelete">
       <form method="dialog">
-        <h2>Borrar foto del repositorio</h2>
+        <h2>Borrar foto</h2>
         <p id="confirmDeleteMsg"></p>
-        <p>
-          Esto elimina el <code>.md</code> y el <code>.jpg</code> del disco.
-          Se hace efectivo en el sitio al publicar.
-          Para confirmar, escribe el slug:
+        <p class="dim">
+          Se mueve a <code>_trash/</code>. Se puede recuperar a mano si te
+          arrepientes antes de publicar.
         </p>
-        <input id="confirmDeleteInput" autocomplete="off" />
         <menu>
           <button value="cancel" class="btn">Cancelar</button>
-          <button value="confirm" id="confirmDeleteOk" class="btn btn-danger" disabled>
-            Sí, borrar
+          <button value="confirm" class="btn btn-danger" autofocus>
+            Borrar
           </button>
-        </menu>
-      </form>
-    </dialog>
-
-    <dialog id="confirmPublish">
-      <form method="dialog">
-        <h2>Publicar al sitio</h2>
-        <p id="confirmPublishMsg"></p>
-        <label>
-          <span>Mensaje del commit</span>
-          <input id="commitMsg" autocomplete="off" />
-        </label>
-        <menu>
-          <button value="cancel" class="btn">Cancelar</button>
-          <button value="confirm" class="btn btn-primary">Publicar</button>
         </menu>
       </form>
     </dialog>

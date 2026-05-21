@@ -190,22 +190,15 @@ editForm.addEventListener('submit', async (e) => {
 // ── Borrar ────────────────────────────────────────────────────────────
 
 const deleteDialog = $('#confirmDelete');
-const deleteInput = $('#confirmDeleteInput');
-const deleteOk = $('#confirmDeleteOk');
 
 $('#deleteBtn').addEventListener('click', () => {
   const slug = state.selectedSlug;
   if (!slug) return;
+  const p = state.photos.find((x) => x.slug === slug);
+  const title = p?.data?.title_es || slug;
   $('#confirmDeleteMsg').innerHTML =
-    `Vas a borrar <code>${escapeHtml(slug)}</code> del repositorio.`;
-  deleteInput.value = '';
-  deleteOk.disabled = true;
-  deleteInput.dataset.expect = slug;
+    `Vas a borrar <strong>${escapeHtml(title)}</strong> (<code>${escapeHtml(slug)}</code>).`;
   deleteDialog.showModal();
-});
-
-deleteInput.addEventListener('input', () => {
-  deleteOk.disabled = deleteInput.value.trim() !== deleteInput.dataset.expect;
 });
 
 deleteDialog.addEventListener('close', async () => {
@@ -276,52 +269,59 @@ function setupSortable() {
   });
 }
 
-// ── Estado de cambios pendientes ───────────────────────────────────────
+// ── Estado de cambios pendientes + countdown auto-publish ─────────────
+
+let pollTimer = null;
 
 async function refreshPending() {
   try {
     const r = await fetch('/api/status');
     const j = await r.json();
     const n = j.pendientes || 0;
-    if (n === 0) {
-      pendingEl.textContent = 'Sin cambios pendientes';
-      pendingEl.classList.remove('has');
+    const a = j.auto || {};
+    pendingEl.classList.remove('has', 'error', 'publishing');
+
+    if (a.lastError) {
+      pendingEl.textContent = `Error al publicar — pulsa para reintentar`;
+      pendingEl.classList.add('error');
+      publishBtn.disabled = false;
+      publishBtn.textContent = 'Reintentar';
+    } else if (a.publishing) {
+      pendingEl.textContent = 'Publicando al sitio…';
+      pendingEl.classList.add('publishing');
       publishBtn.disabled = true;
+      publishBtn.textContent = 'Publicando…';
+    } else if (n === 0) {
+      const recent = a.lastPublishedAt && Date.now() - a.lastPublishedAt < 15_000;
+      pendingEl.textContent = recent ? '✓ Publicado al sitio' : 'Sin cambios pendientes';
+      publishBtn.disabled = true;
+      publishBtn.textContent = 'Publicar ahora';
     } else {
-      pendingEl.textContent = `${n} archivo${n === 1 ? '' : 's'} con cambios`;
+      const secs = a.nextAutoIn != null ? Math.ceil(a.nextAutoIn / 1000) : 30;
+      pendingEl.textContent =
+        `${n} cambio${n === 1 ? '' : 's'} · auto-publicar en ${secs}s`;
       pendingEl.classList.add('has');
       publishBtn.disabled = false;
+      publishBtn.textContent = 'Publicar ahora';
     }
   } catch {}
 }
 
-// ── Publicar ───────────────────────────────────────────────────────────
+function startPolling() {
+  if (pollTimer) return;
+  pollTimer = setInterval(refreshPending, 1500);
+}
 
-const publishDialog = $('#confirmPublish');
-const commitMsg = $('#commitMsg');
+// ── Publicar (ahora — adelanta el auto-publish del batch) ─────────────
 
 publishBtn.addEventListener('click', async () => {
-  const r = await fetch('/api/status');
-  const j = await r.json();
-  const n = j.pendientes || 0;
-  if (n === 0) {
-    toast('No hay cambios para publicar.');
-    return;
-  }
-  $('#confirmPublishMsg').innerHTML =
-    `<strong>${n} archivo${n === 1 ? '' : 's'}</strong> serán commiteados y pusheados.`;
-  commitMsg.value = 'manage: actualizar metadatos y orden de fotos';
-  publishDialog.showModal();
-});
-
-publishDialog.addEventListener('close', async () => {
-  if (publishDialog.returnValue !== 'confirm') return;
-  toast('Publicando…');
+  publishBtn.disabled = true;
+  publishBtn.textContent = 'Publicando…';
   try {
     const r = await fetch('/api/publish', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ message: commitMsg.value.trim() || 'manage: cambios desde el gestor' }),
+      body: JSON.stringify({ message: 'manage: cambios desde el gestor' }),
     });
     const j = await r.json();
     if (!r.ok) throw new Error(j.error || 'Error');
@@ -355,6 +355,7 @@ function toast(msg, isError = false) {
     renderGrid();
     setupSortable();
     refreshPending();
+    startPolling();
   } catch (err) {
     grid.innerHTML = `<p style="color:var(--danger);padding:20px">Error cargando fotos: ${err.message}</p>`;
   }

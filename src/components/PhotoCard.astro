@@ -147,30 +147,32 @@ const fallbackSpan = Math.max(1, Math.ceil((fallbackHeight + 12) / 16));
   }
   .card:hover .photo { transform: scale(1.01); }
 
+  /* Hover: barra inferior con fondo blanco translúcido, sólo lo alto del
+     texto, sin gradient ni cubrir el resto de la foto. */
   .overlay {
     position: absolute;
     inset-block-end: 0;
     inset-inline: 0;
-    padding: clamp(20px, 3vw, 36px);
-    background: linear-gradient(transparent, var(--overlay));
-    color: var(--overlay-fg);
+    padding: 10px 14px;
+    background: rgba(255, 255, 255, 0.88);
+    color: #1c1c1a;
+    -webkit-backdrop-filter: blur(6px);
+    backdrop-filter: blur(6px);
     opacity: 0;
-    transform: translateY(8px);
-    transition: opacity 280ms ease, transform 280ms ease;
+    transition: opacity 200ms ease;
     pointer-events: none;
   }
   .card:hover .overlay {
     opacity: 1;
-    transform: translateY(0);
   }
   @media (hover: none) {
-    .overlay { opacity: 1; transform: none; }
+    .overlay { opacity: 1; }
   }
   .overlay p {
     margin: 0;
     max-width: 60ch;
-    font-size: 0.9rem;
-    line-height: 1.5;
+    font-size: 0.82rem;
+    line-height: 1.4;
     font-weight: 400;
   }
 
