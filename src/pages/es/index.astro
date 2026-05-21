@@ -2,7 +2,6 @@
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import Hero from '../../components/Hero.astro';
 import Gallery from '../../components/Gallery.astro';
-import Lightbox from '../../components/Lightbox.astro';
 import { getAllPhotos } from '../../lib/photos';
 
 const all = await getAllPhotos();
@@ -25,65 +24,33 @@ const galleryId = 'home-gallery';
 
   <div id={galleryId}>
     <Gallery photos={all} locale="es" eagerCount={heroBirds || heroLandscapes ? 0 : 4} />
-    <Lightbox gallerySelector={`#${galleryId}`} />
   </div>
 </BaseLayout>
 
 <script>
   // Coordinador de filtros de la home.
-  // Modelo: dos toggles independientes (aves, paisajes), default aves=on.
-  // - Si ninguno está activo, no hay filtro de categoría: se ve todo.
-  // - Si uno solo está activo, se ven sólo sus fotos.
-  // - Si ambos están activos, se ve todo (igual que ninguno).
-  // El estado se codifica en el hash: "#aves", "#paisajes", "#aves+paisajes" o vacío.
-  type State = { aves: boolean; paisajes: boolean };
+  // Modelo excluyente (radio): exactamente UNA categoría está activa a la vez.
+  // Default: aves. Hash: "#aves" o "#paisajes" (vacío = aves).
+  type Cat = 'aves' | 'paisajes';
 
-  function readHash(): State {
+  function readCat(): Cat {
     const h = location.hash.replace('#', '');
-    if (!h) return { aves: true, paisajes: false }; // default
-    const parts = h.split('+').map((s) => s.trim()).filter(Boolean);
-    return { aves: parts.includes('aves'), paisajes: parts.includes('paisajes') };
+    return h === 'paisajes' ? 'paisajes' : 'aves';
   }
 
-  function writeHash(s: State, replace = false) {
-    const parts: string[] = [];
-    if (s.aves) parts.push('aves');
-    if (s.paisajes) parts.push('paisajes');
-    const next = parts.length ? `#${parts.join('+')}` : '';
-    if (!next || replace) {
-      // Limpiar hash sin URL fea (#%20) y sin recargar. Disparamos applyFilters
-      // manualmente porque replaceState no dispara hashchange.
-      history.replaceState(null, '', location.pathname + location.search + next);
-      applyFilters();
-    } else if (location.hash !== next) {
-      location.hash = next;
-    }
-  }
-
-  let state: State = readHash();
-
-  function filterActiveFor(cat: 'aves' | 'paisajes'): boolean {
-    // Sólo "no se muestra esta categoría" si exactamente la OTRA está activada
-    // en exclusiva.
-    if (!state.aves && !state.paisajes) return true; // ambos off = todo
-    if (state.aves && state.paisajes) return true; // ambos on = todo
-    return state[cat];
-  }
+  let state: Cat = readCat();
 
   function applyFilters() {
     document.querySelectorAll<HTMLElement>('[data-heroes] [data-hero-category]').forEach((h) => {
-      const cat = h.dataset.heroCategory as 'aves' | 'paisajes';
-      h.style.display = filterActiveFor(cat) ? '' : 'none';
+      h.style.display = h.dataset.heroCategory === state ? '' : 'none';
     });
 
     document.querySelectorAll<HTMLElement>('.gallery .card').forEach((card) => {
-      const cat = card.dataset.category as 'aves' | 'paisajes';
-      card.classList.toggle('filter-out', !filterActiveFor(cat));
+      card.classList.toggle('filter-out', card.dataset.category !== state);
     });
 
     document.querySelectorAll<HTMLAnchorElement>('.site-nav a[data-kind="toggle"]').forEach((a) => {
-      const f = a.dataset.filter as 'aves' | 'paisajes';
-      const active = state[f];
+      const active = a.dataset.filter === state;
       a.classList.toggle('filter-active', active);
       a.setAttribute('aria-pressed', active ? 'true' : 'false');
     });
@@ -92,17 +59,15 @@ const galleryId = 'home-gallery';
   }
 
   function init() {
-    state = readHash();
+    state = readCat();
     applyFilters();
 
     window.addEventListener('hashchange', () => {
-      state = readHash();
+      state = readCat();
       applyFilters();
     });
 
-    // Toggles AVES y PAISAJES: interceptamos el click en la home para mutar el
-    // state y reescribir el hash. Desde otras páginas, el browser navega
-    // normalmente al href y este script (en home) aplicará el estado al cargar.
+    // Click en AVES o PAISAJES: setea esa categoría (radio, no toggle).
     document.querySelectorAll<HTMLAnchorElement>('.site-nav a[data-kind="toggle"]').forEach((a) => {
       a.addEventListener('click', (e) => {
         const pathSame =
@@ -111,14 +76,16 @@ const galleryId = 'home-gallery';
           a.pathname + '/' === location.pathname;
         if (!pathSame) return;
         e.preventDefault();
-        const f = a.dataset.filter as 'aves' | 'paisajes';
-        state = { ...state, [f]: !state[f] };
-        writeHash(state);
+        const f = a.dataset.filter as Cat;
+        if (state === f) return; // ya está activo, nada que hacer
+        state = f;
+        const next = f === 'aves' ? '' : '#paisajes';
+        history.replaceState(null, '', location.pathname + location.search + next);
         applyFilters();
       });
     });
 
-    // PORTADA: reset al default (aves on, paisajes off, hash limpio).
+    // PORTADA: reset al default (aves).
     document.querySelectorAll<HTMLAnchorElement>('.site-nav a[data-kind="home"]').forEach((a) => {
       a.addEventListener('click', (e) => {
         const pathSame =
@@ -127,8 +94,8 @@ const galleryId = 'home-gallery';
           a.pathname + '/' === location.pathname;
         if (!pathSame) return;
         e.preventDefault();
-        state = { aves: true, paisajes: false };
-        writeHash(state, true);
+        state = 'aves';
+        history.replaceState(null, '', location.pathname + location.search);
         applyFilters();
         window.scrollTo({ top: 0, behavior: 'smooth' });
       });

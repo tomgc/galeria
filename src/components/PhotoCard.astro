@@ -54,13 +54,7 @@ const fallbackSpan = Math.max(1, Math.ceil((fallbackHeight + 12) / 16));
   data-tags={data.tags.join(' ')}
   style={`--ratio: ${aspectRatio}; grid-row-end: span ${fallbackSpan};`}
 >
-  <a
-    class="thumb"
-    href={fullImg.src}
-    data-pswp-width={fullImg.attributes.width ?? data.image.width}
-    data-pswp-height={fullImg.attributes.height ?? data.image.height}
-    data-detail={detailHref}
-  >
+  <a class="thumb" href={detailHref}>
     <Picture
       src={data.image}
       formats={['avif', 'webp']}
@@ -106,7 +100,6 @@ const fallbackSpan = Math.max(1, Math.ceil((fallbackHeight + 12) / 16));
         {data.exif.focal_length && (<><dt>{locale === 'es' ? 'Focal' : 'Focal'}</dt><dd>{data.exif.focal_length}</dd></>)}
         <dt>{locale === 'es' ? 'Fecha' : 'Date'}</dt>
         <dd>{new Date(data.date_taken).toLocaleDateString(locale === 'es' ? 'es-CL' : 'en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</dd>
-        {data.coords && (<><dt>{locale === 'es' ? 'Coord.' : 'Coord.'}</dt><dd>{data.coords.lat.toFixed(3)}, {data.coords.lng.toFixed(3)}</dd></>)}
       </dl>
       {data.tags.length > 0 && (
         <div class="info-tags">
@@ -149,17 +142,15 @@ const fallbackSpan = Math.max(1, Math.ceil((fallbackHeight + 12) / 16));
   }
   .card:hover .photo { transform: scale(1.01); }
 
-  /* Hover: barra inferior con fondo blanco translúcido, sólo lo alto del
-     texto, sin gradient ni cubrir el resto de la foto. */
+  /* Hover: barra inferior con fondo gris oscuro semi-transparente. Sólo cubre
+     el alto del texto, no la foto completa. */
   .overlay {
     position: absolute;
     inset-block-end: 0;
     inset-inline: 0;
     padding: 10px 14px;
-    background: rgba(255, 255, 255, 0.88);
-    color: #1c1c1a;
-    -webkit-backdrop-filter: blur(6px);
-    backdrop-filter: blur(6px);
+    background: rgba(30, 30, 30, 0.72);
+    color: #fff;
     opacity: 0;
     transition: opacity 200ms ease;
     pointer-events: none;

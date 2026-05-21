@@ -27,13 +27,7 @@ const aspectRatio = `${data.image.width} / ${data.image.height}`;
 ---
 
 <figure class="hero" data-info-open="false" style={`--ratio: ${aspectRatio};`}>
-  <a
-    class="thumb"
-    href={fullImg.src}
-    data-pswp-width={fullImg.attributes.width ?? data.image.width}
-    data-pswp-height={fullImg.attributes.height ?? data.image.height}
-    data-detail={detailHref}
-  >
+  <a class="thumb" href={detailHref}>
     <Picture
       src={data.image}
       formats={['avif', 'webp']}
@@ -79,7 +73,6 @@ const aspectRatio = `${data.image.width} / ${data.image.height}`;
         {data.exif.focal_length && (<><dt>{locale === 'es' ? 'Focal' : 'Focal'}</dt><dd>{data.exif.focal_length}</dd></>)}
         <dt>{locale === 'es' ? 'Fecha' : 'Date'}</dt>
         <dd>{new Date(data.date_taken).toLocaleDateString(locale === 'es' ? 'es-CL' : 'en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</dd>
-        {data.coords && (<><dt>{locale === 'es' ? 'Coord.' : 'Coord.'}</dt><dd>{data.coords.lat.toFixed(3)}, {data.coords.lng.toFixed(3)}</dd></>)}
       </dl>
       {data.tags.length > 0 && (
         <div class="info-tags">
@@ -115,21 +108,21 @@ const aspectRatio = `${data.image.width} / ${data.image.height}`;
   }
   .hero:hover .photo { transform: scale(1.01); }
 
+  /* Hover: barra inferior con gris semi-transparente, sólo lo del texto. */
   .overlay {
     position: absolute;
     inset-block-end: 0;
     inset-inline: 0;
-    padding: clamp(24px, 4vw, 48px);
-    background: linear-gradient(transparent, var(--overlay));
-    color: var(--overlay-fg);
+    padding: 14px clamp(16px, 3vw, 32px);
+    background: rgba(30, 30, 30, 0.72);
+    color: #fff;
     opacity: 0;
-    transform: translateY(8px);
-    transition: opacity 280ms ease, transform 280ms ease;
+    transition: opacity 200ms ease;
     pointer-events: none;
   }
-  .hero:hover .overlay { opacity: 1; transform: translateY(0); }
+  .hero:hover .overlay { opacity: 1; }
   @media (hover: none) {
-    .overlay { opacity: 1; transform: none; }
+    .overlay { opacity: 1; }
   }
   .overlay p {
     margin: 0;

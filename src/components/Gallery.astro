@@ -2,7 +2,6 @@
 import type { CollectionEntry } from 'astro:content';
 import type { Locale } from '../i18n';
 import PhotoCard from './PhotoCard.astro';
-import Lightbox from './Lightbox.astro';
 import { useTranslations } from '../i18n';
 
 interface Props {
@@ -44,8 +43,6 @@ const decorated = photos.map((p) => {
     </div>
 
     <div class="infinite-sentinel" data-sentinel-for={galleryId}></div>
-
-    <Lightbox gallerySelector={`#${galleryId}`} />
   </>
 )}
 
@@ -61,16 +58,21 @@ const decorated = photos.map((p) => {
     --cols-md: 2;
     --cols-lg: 3;
   }
-  /* Compacta: fotos pequeñas y juntas, claramente distintas de "amplia". */
+  /* Compacta: fotos más pequeñas que amplia pero no diminutas. Mosaico. */
   .gallery.density-compact {
-    --cols-sm: 3;
-    --cols-md: 6;
-    --cols-lg: 8;
+    --cols-sm: 2;
+    --cols-md: 4;
+    --cols-lg: 6;
   }
-  /* En compacta, las panorámicas dejan de ensancharse a 2 cols (quedan
-     desproporcionadamente grandes con el grid denso). */
-  .gallery.density-compact > .card.wide {
+  .gallery.density-compact > :global(.card.wide) {
     grid-column: auto;
+  }
+  /* En compacta el grid es un mosaico puro: sin título, sin info técnica y
+     sin overlay al hover. Sólo las fotos. */
+  .gallery.density-compact :global(.card .meta),
+  .gallery.density-compact :global(.card .info),
+  .gallery.density-compact :global(.card .overlay) {
+    display: none !important;
   }
 
   @media (min-width: 640px) {

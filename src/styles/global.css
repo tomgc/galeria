@@ -68,8 +68,11 @@ body {
   line-height: 1.6;
   font-size: 16px;
   transition: background-color var(--transition), color var(--transition);
-  /* Evita scroll horizontal por overflow de hijos. `clip` no crea contexto de
-     scroll y por tanto no rompe position: sticky del header. */
+  /* Evita scroll horizontal por overflow de hijos. Safari < 16 no soporta
+     `clip` — declaramos `hidden` primero como fallback y `clip` después;
+     navegadores modernos usan clip (no rompe position: sticky), Safari viejo
+     cae a hidden. */
+  overflow-x: hidden;
   overflow-x: clip;
 }
 
