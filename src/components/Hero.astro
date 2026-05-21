@@ -84,7 +84,7 @@ const aspectRatio = `${data.image.width} / ${data.image.height}`;
       {data.tags.length > 0 && (
         <div class="info-tags">
           {data.tags.map((tag) => (
-            <button type="button" class="info-tag" data-tag={tag}>{tag}</button>
+            <span class="info-tag">{tag}</span>
           ))}
         </div>
       )}
@@ -249,10 +249,7 @@ const aspectRatio = `${data.image.width} / ${data.image.height}`;
     color: var(--fg-muted);
     background: transparent;
     font-family: inherit;
-    cursor: pointer;
-    transition: color 120ms, border-color 120ms;
   }
-  .info-tag:hover { color: var(--fg); border-color: var(--fg-muted); opacity: 1; }
 </style>
 
 <script>

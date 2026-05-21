@@ -68,6 +68,9 @@ body {
   line-height: 1.6;
   font-size: 16px;
   transition: background-color var(--transition), color var(--transition);
+  /* Evita scroll horizontal por overflow de hijos. `clip` no crea contexto de
+     scroll y por tanto no rompe position: sticky del header. */
+  overflow-x: clip;
 }
 
 main {

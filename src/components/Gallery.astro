@@ -16,9 +16,6 @@ const { photos, locale, eagerCount = 4 } = Astro.props;
 const t = useTranslations(locale);
 const galleryId = `gallery-${Math.random().toString(36).slice(2, 8)}`;
 
-// Calcula cuántas columnas debe abarcar cada card según su aspect ratio.
-// - Panorámicas (>1.8:1, más anchas que 16:9): 2 columnas para que respiren.
-// - Resto: 1 columna.
 const PANORAMA_THRESHOLD = 1.8;
 const decorated = photos.map((p) => {
   const ratio = p.data.image.width / p.data.image.height;
@@ -26,13 +23,8 @@ const decorated = photos.map((p) => {
   return { photo: p, wide, ratio };
 });
 
-const totalLabel = locale === 'es' ? 'fotos' : 'photos';
 const densityLabel = locale === 'es' ? 'Vista' : 'View';
-const showLabel = locale === 'es' ? 'Mostrar' : 'Show';
-const seeMore = locale === 'es' ? 'Ver más' : 'See more';
-const allLabel = locale === 'es' ? 'todas' : 'all';
 const looseLabel = locale === 'es' ? 'amplia' : 'spacious';
-const normalLabel = locale === 'es' ? 'normal' : 'normal';
 const compactLabel = locale === 'es' ? 'compacta' : 'compact';
 ---
 
@@ -46,24 +38,12 @@ const compactLabel = locale === 'es' ? 'compacta' : 'compact';
     <div class="controls" data-controls-for={galleryId}>
       <div class="ctl-group">
         <span class="ctl-label">{densityLabel}</span>
-        <button class="ctl-chip" type="button" data-density="loose">{looseLabel}</button>
-        <button class="ctl-chip" type="button" data-density="normal" aria-pressed="true">{normalLabel}</button>
+        <button class="ctl-chip" type="button" data-density="loose" aria-pressed="true">{looseLabel}</button>
         <button class="ctl-chip" type="button" data-density="compact">{compactLabel}</button>
       </div>
-      <div class="ctl-group">
-        <span class="ctl-label">{showLabel}</span>
-        <button class="ctl-chip" type="button" data-limit="24" aria-pressed="true">24</button>
-        <button class="ctl-chip" type="button" data-limit="48">48</button>
-        <button class="ctl-chip" type="button" data-limit="96">96</button>
-        <button class="ctl-chip" type="button" data-limit="all">{allLabel}</button>
-      </div>
-      <span class="ctl-count">
-        <span data-shown>{Math.min(24, photos.length)}</span> /
-        <span data-total-shown>{photos.length}</span> {totalLabel}
-      </span>
     </div>
 
-    <div id={galleryId} class="gallery density-normal" data-masonry data-total={photos.length}>
+    <div id={galleryId} class="gallery density-loose" data-masonry data-total={photos.length}>
       {decorated.map(({ photo, wide }, i) => (
         <PhotoCard
           photo={photo}
@@ -74,31 +54,21 @@ const compactLabel = locale === 'es' ? 'compacta' : 'compact';
       ))}
     </div>
 
-    <div class="more" data-more-for={galleryId} hidden>
-      <button type="button" class="more-btn">{seeMore}</button>
-    </div>
+    <div class="infinite-sentinel" data-sentinel-for={galleryId}></div>
 
     <Lightbox gallerySelector={`#${galleryId}`} />
   </>
 )}
 
 <style>
-  /* Controles arriba del grid */
   .controls {
     display: flex;
-    flex-wrap: wrap;
     align-items: center;
-    gap: 12px 20px;
-    margin-bottom: 20px;
-    padding: 10px 0;
-    border-top: 1px solid var(--border);
-    border-bottom: 1px solid var(--border);
+    gap: 16px;
+    margin-bottom: 16px;
+    padding: 8px 0;
   }
-  .ctl-group {
-    display: flex;
-    align-items: center;
-    gap: 4px;
-  }
+  .ctl-group { display: flex; align-items: center; gap: 4px; }
   .ctl-label {
     font-size: 11px;
     text-transform: uppercase;
@@ -114,48 +84,30 @@ const compactLabel = locale === 'es' ? 'compacta' : 'compact';
     font: inherit;
     font-size: 12px;
     cursor: pointer;
-    border-radius: 0;
     transition: color 120ms, border-color 120ms, background 120ms;
   }
-  .ctl-chip:hover {
-    color: var(--fg);
-    border-color: var(--fg-muted);
-  }
+  .ctl-chip:hover { color: var(--fg); border-color: var(--fg-muted); }
   .ctl-chip[aria-pressed='true'] {
     background: var(--fg);
     color: var(--bg);
     border-color: var(--fg);
   }
-  .ctl-count {
-    margin-left: auto;
-    font-size: 12px;
-    color: var(--fg-faint);
-    font-variant-numeric: tabular-nums;
-  }
 
-  /* Grid principal — los cuántas columnas se controlan vía custom props
-     que cambian con la clase de densidad. */
   .gallery {
     display: grid;
     grid-template-columns: 1fr;
     grid-auto-rows: 4px;
     grid-auto-flow: dense;
     gap: var(--gap);
-
-    /* normal (default) */
-    --cols-sm: 2;
-    --cols-md: 3;
-    --cols-lg: 4;
-  }
-  .gallery.density-loose {
+    /* dos niveles: amplia (default) y compacta */
     --cols-sm: 1;
     --cols-md: 2;
     --cols-lg: 3;
   }
   .gallery.density-compact {
-    --cols-sm: 3;
-    --cols-md: 5;
-    --cols-lg: 6;
+    --cols-sm: 2;
+    --cols-md: 3;
+    --cols-lg: 4;
   }
 
   @media (min-width: 640px) {
@@ -168,61 +120,52 @@ const compactLabel = locale === 'es' ? 'compacta' : 'compact';
     .gallery { grid-template-columns: repeat(var(--cols-lg), 1fr); }
   }
 
-  /* Card oculta por paginación: ocupa cero espacio en el grid. */
-  .gallery > .is-hidden {
-    display: none;
+  .gallery > .is-hidden, .gallery > .filter-out { display: none; }
+
+  .infinite-sentinel {
+    height: 1px;
+    margin-top: -1px;
   }
 
-  .more {
-    display: flex;
-    justify-content: center;
-    margin-top: 24px;
-  }
-  .more-btn {
-    background: transparent;
-    border: 1px solid var(--border);
-    color: var(--fg);
-    padding: 10px 24px;
-    font: inherit;
-    font-size: 13px;
-    cursor: pointer;
-    transition: background 120ms, border-color 120ms;
-  }
-  .more-btn:hover {
-    background: var(--bg-elev);
-    border-color: var(--fg-muted);
-  }
-
-  .empty {
-    text-align: center;
-    padding: 12vh 0;
-    color: var(--fg-muted);
-  }
-  .empty h2 {
-    color: var(--fg);
-  }
+  .empty { text-align: center; padding: 12vh 0; color: var(--fg-muted); }
+  .empty h2 { color: var(--fg); }
 </style>
 
 <script>
-  // ── Masonry "real": cada card toma N filas según su altura medida. ──
+  // ── Masonry: cada card toma N filas según su altura natural. ──
+  // Para evitar bugs cuando se expande/contrae el panel de info de una card
+  // (la altura medida del DOM queda "constrained" por el row-span vigente),
+  // calculamos la altura del thumb a partir de su aspect-ratio CSS en lugar
+  // de getBoundingClientRect().height.
+  function parseRatio(card: HTMLElement): number {
+    const raw = card.style.getPropertyValue('--ratio').trim();
+    if (!raw) return 1.5;
+    const [w, h] = raw.split('/').map((s) => parseFloat(s));
+    if (!w || !h) return 1.5;
+    return w / h;
+  }
+
   function setupMasonry() {
     const galleries = document.querySelectorAll<HTMLElement>('[data-masonry]');
     if (galleries.length === 0) return;
-
     const ROW_UNIT = 4;
 
     function applySpans() {
       for (const gallery of galleries) {
         const style = getComputedStyle(gallery);
         const gap = parseFloat(style.rowGap || style.gap || '12');
-        const cards = gallery.children;
-        for (let i = 0; i < cards.length; i++) {
-          const card = cards[i] as HTMLElement;
-          if (card.classList.contains('is-hidden')) continue;
+        const cards = Array.from(gallery.children).filter(
+          (c): c is HTMLElement => (c as HTMLElement).classList?.contains('card'),
+        );
+        for (const card of cards) {
+          if (card.classList.contains('is-hidden') || card.classList.contains('filter-out')) continue;
           const thumb = card.querySelector('.thumb') as HTMLElement | null;
+          if (!thumb) continue;
+          const thumbW = thumb.getBoundingClientRect().width;
+          const ratio = parseRatio(card);
+          const thumbH = thumbW / ratio;
           const meta = card.querySelector('.meta') as HTMLElement | null;
           const info = card.querySelector('.info') as HTMLElement | null;
-          const thumbH = thumb?.getBoundingClientRect().height ?? 0;
           const metaH = meta?.getBoundingClientRect().height ?? 0;
           const infoH = card.dataset.infoOpen === 'true'
             ? (info?.getBoundingClientRect().height ?? 0)
@@ -236,10 +179,13 @@ const compactLabel = locale === 'es' ? 'compacta' : 'compact';
     }
 
     applySpans();
+    // Reintento tras carga de imágenes (algunas pueden no estar listas en el primer pasado).
+    setTimeout(applySpans, 60);
+    setTimeout(applySpans, 400);
 
     const ro = new ResizeObserver(() => applySpans());
     for (const gallery of galleries) {
-      for (const card of Array.from(gallery.children)) ro.observe(card);
+      for (const card of Array.from(gallery.children).filter((c): c is HTMLElement => (c as HTMLElement).classList?.contains('card'))) ro.observe(card);
     }
 
     let raf = 0;
@@ -248,48 +194,42 @@ const compactLabel = locale === 'es' ? 'compacta' : 'compact';
       raf = requestAnimationFrame(applySpans);
     });
 
+    // Reaplicar al abrir/cerrar el panel de info de una card.
     const cardObserver = new MutationObserver((records) => {
       const relevant = records.some((r) =>
         r.type === 'attributes' && r.attributeName === 'data-info-open');
       if (relevant) {
         applySpans();
-        setTimeout(applySpans, 300);
+        // La transición CSS dura ~280ms; reaplicamos varias veces para acompañarla.
+        setTimeout(applySpans, 100);
+        setTimeout(applySpans, 320);
+        setTimeout(applySpans, 500);
       }
     });
     for (const gallery of galleries) {
-      for (const card of Array.from(gallery.children)) {
+      for (const card of Array.from(gallery.children).filter((c): c is HTMLElement => (c as HTMLElement).classList?.contains('card'))) {
         cardObserver.observe(card, { attributes: true, attributeFilter: ['data-info-open'] });
       }
     }
 
-    // Reaplicar también cuando alguien dispara recálculo explícito.
     window.addEventListener('gallery:relayout', () => {
       applySpans();
       setTimeout(applySpans, 60);
     });
   }
 
-  // ── Controles: densidad + paginación ──
-  // Persistencia global vía localStorage. Aplica a todas las galerías de la
-  // sesión (la home, /aves/, /paisajes/, /tags/...).
-  type Density = 'loose' | 'normal' | 'compact';
-  const DEFAULT_DENSITY: Density = 'normal';
-  const DEFAULT_LIMIT = 24;
+  // ── Densidad (amplia / compacta) — persistencia en localStorage. ──
+  type Density = 'loose' | 'compact';
+  const DEFAULT_DENSITY: Density = 'loose';
 
   function readDensity(): Density {
     const v = localStorage.getItem('galeria.density') as Density | null;
-    return v === 'loose' || v === 'compact' ? v : DEFAULT_DENSITY;
-  }
-  function readLimit(): number | 'all' {
-    const v = localStorage.getItem('galeria.limit');
-    if (v === 'all') return 'all';
-    const n = parseInt(v || '', 10);
-    return Number.isFinite(n) && n > 0 ? n : DEFAULT_LIMIT;
+    return v === 'compact' ? 'compact' : DEFAULT_DENSITY;
   }
 
   function applyDensity(d: Density) {
     document.querySelectorAll<HTMLElement>('.gallery').forEach((g) => {
-      g.classList.remove('density-loose', 'density-normal', 'density-compact');
+      g.classList.remove('density-loose', 'density-compact');
       g.classList.add(`density-${d}`);
     });
     document.querySelectorAll<HTMLButtonElement>('.controls [data-density]').forEach((b) => {
@@ -298,48 +238,59 @@ const compactLabel = locale === 'es' ? 'compacta' : 'compact';
     window.dispatchEvent(new Event('gallery:relayout'));
   }
 
-  function applyLimit(limit: number | 'all') {
-    document.querySelectorAll<HTMLElement>('.gallery[data-masonry]').forEach((gallery) => {
-      const cards = Array.from(gallery.children) as HTMLElement[];
-      // Sólo se cuentan/paginan las cards que NO fueron descartadas por filtros
-      // externos (categoría, tag) de la página contenedora.
-      const eligible = cards.filter((c) => !c.classList.contains('filter-out'));
-      const total = eligible.length;
-      const visible = limit === 'all' ? total : Math.min(limit, total);
-      // Limpiar is-hidden de las descartadas (display:none ya las saca)
-      cards.forEach((c) => {
-        if (c.classList.contains('filter-out')) c.classList.remove('is-hidden');
-      });
-      eligible.forEach((c, i) => c.classList.toggle('is-hidden', i >= visible));
+  // ── Scroll infinito: muestra 20 al inicio + 20 cada vez que el sentinel
+  //    aparece en pantalla. Se reinicia cuando cambia el filtro de categoría. ──
+  const INITIAL = 20;
+  const STEP = 20;
+  const shown = new WeakMap<HTMLElement, number>();
 
-      const ctl = document.querySelector(`.controls[data-controls-for='${gallery.id}']`);
-      const shown = ctl?.querySelector('[data-shown]');
-      const totalEl = ctl?.querySelector('[data-total-shown]');
-      if (shown) shown.textContent = String(visible);
-      if (totalEl) totalEl.textContent = String(total);
-
-      const moreWrap = document.querySelector<HTMLElement>(
-        `.more[data-more-for='${gallery.id}']`,
-      );
-      if (moreWrap) moreWrap.hidden = visible >= total;
-    });
-    document.querySelectorAll<HTMLButtonElement>('.controls [data-limit]').forEach((b) => {
-      const val = b.dataset.limit;
-      const pressed = (limit === 'all' && val === 'all') || String(limit) === val;
-      b.setAttribute('aria-pressed', pressed ? 'true' : 'false');
-    });
+  function applyVisibility(gallery: HTMLElement) {
+    const cards = Array.from(gallery.children).filter((c): c is HTMLElement => (c as HTMLElement).classList?.contains('card')) as HTMLElement[];
+    const eligible = cards.filter((c) => !c.classList.contains('filter-out'));
+    const limit = shown.get(gallery) ?? INITIAL;
+    cards.forEach((c) => c.classList.remove('is-hidden'));
+    eligible.forEach((c, i) => c.classList.toggle('is-hidden', i >= limit));
     window.dispatchEvent(new Event('gallery:relayout'));
   }
 
-  // Las páginas que contengan la galería pueden disparar este evento cuando
-  // cambien un filtro externo (categoría, tag, etc.) para que la paginación
-  // y el contador se reajusten.
-  window.addEventListener('gallery:filter-changed', () => applyLimit(readLimit()));
+  function setupInfinite() {
+    document.querySelectorAll<HTMLElement>('.gallery[data-masonry]').forEach((gallery) => {
+      shown.set(gallery, INITIAL);
+      applyVisibility(gallery);
 
-  function setupControls() {
+      const sentinel = document.querySelector<HTMLElement>(
+        `.infinite-sentinel[data-sentinel-for='${gallery.id}']`,
+      );
+      if (!sentinel) return;
+
+      const observer = new IntersectionObserver(
+        (entries) => {
+          for (const e of entries) {
+            if (!e.isIntersecting) continue;
+            const cards = Array.from(gallery.children).filter((c): c is HTMLElement => (c as HTMLElement).classList?.contains('card')) as HTMLElement[];
+            const eligible = cards.filter((c) => !c.classList.contains('filter-out'));
+            const current = shown.get(gallery) ?? INITIAL;
+            if (current >= eligible.length) return;
+            shown.set(gallery, Math.min(eligible.length, current + STEP));
+            applyVisibility(gallery);
+          }
+        },
+        { rootMargin: '400px 0px' },
+      );
+      observer.observe(sentinel);
+    });
+
+    // Cuando cambia el filtro externo, reseteamos el "visto" al inicial.
+    window.addEventListener('gallery:filter-changed', () => {
+      document.querySelectorAll<HTMLElement>('.gallery[data-masonry]').forEach((g) => {
+        shown.set(g, INITIAL);
+        applyVisibility(g);
+      });
+    });
+  }
+
+  function setupDensityControls() {
     applyDensity(readDensity());
-    applyLimit(readLimit());
-
     document.querySelectorAll<HTMLButtonElement>('.controls [data-density]').forEach((btn) => {
       btn.addEventListener('click', () => {
         const d = btn.dataset.density as Density;
@@ -347,33 +298,17 @@ const compactLabel = locale === 'es' ? 'compacta' : 'compact';
         applyDensity(d);
       });
     });
-
-    document.querySelectorAll<HTMLButtonElement>('.controls [data-limit]').forEach((btn) => {
-      btn.addEventListener('click', () => {
-        const v = btn.dataset.limit!;
-        const limit = v === 'all' ? 'all' : parseInt(v, 10);
-        localStorage.setItem('galeria.limit', String(limit));
-        applyLimit(limit);
-      });
-    });
-
-    document.querySelectorAll<HTMLButtonElement>('.more-btn').forEach((btn) => {
-      btn.addEventListener('click', () => {
-        const current = readLimit();
-        const next = current === 'all' ? 'all' : current + 24;
-        localStorage.setItem('galeria.limit', String(next));
-        applyLimit(next);
-      });
-    });
   }
 
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', () => {
-      setupControls();
+      setupDensityControls();
+      setupInfinite();
       setupMasonry();
     });
   } else {
-    setupControls();
+    setupDensityControls();
+    setupInfinite();
     setupMasonry();
   }
 </script>

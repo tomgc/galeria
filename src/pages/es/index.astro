@@ -7,16 +7,8 @@ import { getAllPhotos } from '../../lib/photos';
 
 const all = await getAllPhotos();
 
-// Heroes por categoría: la primera marcada hero=true (respeta el orden general).
 const heroBirds = all.find((p) => p.data.hero && p.data.category === 'aves') ?? null;
 const heroLandscapes = all.find((p) => p.data.hero && p.data.category === 'paisajes') ?? null;
-
-// Tags únicos ordenados por frecuencia descendente.
-const tagCounts: Record<string, number> = {};
-for (const p of all) {
-  for (const tag of p.data.tags) tagCounts[tag] = (tagCounts[tag] ?? 0) + 1;
-}
-const tags = Object.entries(tagCounts).sort((a, b) => b[1] - a[1]);
 
 const galleryId = 'home-gallery';
 ---
@@ -31,151 +23,115 @@ const galleryId = 'home-gallery';
     )}
   </div>
 
-  {tags.length > 0 && (
-    <div class="tag-chips" data-tag-chips>
-      <button class="tag-chip" type="button" data-tag="" aria-pressed="true">Todos</button>
-      {tags.map(([tag, count]) => (
-        <button class="tag-chip" type="button" data-tag={tag}>
-          #{tag} <span class="tag-count">{count}</span>
-        </button>
-      ))}
-    </div>
-  )}
-
   <div id={galleryId}>
     <Gallery photos={all} locale="es" eagerCount={heroBirds || heroLandscapes ? 0 : 4} />
     <Lightbox gallerySelector={`#${galleryId}`} />
   </div>
 </BaseLayout>
 
-<style>
-  .heroes {
-    display: flex;
-    flex-direction: column;
-    gap: 0;
-  }
-
-  .tag-chips {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 6px;
-    margin: 24px 0 12px;
-  }
-  .tag-chip {
-    background: transparent;
-    border: 1px solid var(--border);
-    color: var(--fg-muted);
-    padding: 4px 10px;
-    font: inherit;
-    font-size: 11px;
-    letter-spacing: 0.04em;
-    cursor: pointer;
-    transition: color 120ms, border-color 120ms, background 120ms;
-    border-radius: 999px;
-  }
-  .tag-chip:hover {
-    color: var(--fg);
-    border-color: var(--fg-muted);
-  }
-  .tag-chip[aria-pressed='true'] {
-    background: var(--fg);
-    color: var(--bg);
-    border-color: var(--fg);
-  }
-  .tag-count {
-    opacity: 0.6;
-    font-size: 10px;
-    margin-left: 2px;
-  }
-</style>
-
 <script>
-  // Coordina los filtros de la home:
-  //  - Categoría (all / aves / paisajes) viene del hash de la URL.
-  //  - Tag viene del estado in-page (chips).
-  // Cuando alguno cambia, marca cards con `.filter-out` y avisa a Gallery
-  // (`gallery:filter-changed`) para que reajuste contador, paginación y masonry.
-  // Sincroniza también las clases active del nav del header y de los chips.
+  // Coordinador de filtros de la home.
+  // Modelo: dos toggles independientes (aves, paisajes), default aves=on.
+  // - Si ninguno está activo, no hay filtro de categoría: se ve todo.
+  // - Si uno solo está activo, se ven sólo sus fotos.
+  // - Si ambos están activos, se ve todo (igual que ninguno).
+  // El estado se codifica en el hash: "#aves", "#paisajes", "#aves+paisajes" o vacío.
+  type State = { aves: boolean; paisajes: boolean };
 
-  type Cat = 'all' | 'aves' | 'paisajes';
-  // Default = aves (lo más común). El hash "#todas" es el opt-in explícito
-  // para ver el catálogo completo; cualquier otro/vacío cae a aves.
-  const state = { cat: 'aves' as Cat, tag: '' };
-
-  function readCatFromHash(): Cat {
+  function readHash(): State {
     const h = location.hash.replace('#', '');
-    if (h === 'aves' || h === 'paisajes') return h;
-    if (h === 'todas') return 'all';
-    return 'aves';
+    if (!h) return { aves: true, paisajes: false }; // default
+    const parts = h.split('+').map((s) => s.trim()).filter(Boolean);
+    return { aves: parts.includes('aves'), paisajes: parts.includes('paisajes') };
+  }
+
+  function writeHash(s: State, replace = false) {
+    const parts: string[] = [];
+    if (s.aves) parts.push('aves');
+    if (s.paisajes) parts.push('paisajes');
+    const next = parts.length ? `#${parts.join('+')}` : '';
+    if (!next || replace) {
+      // Limpiar hash sin URL fea (#%20) y sin recargar. Disparamos applyFilters
+      // manualmente porque replaceState no dispara hashchange.
+      history.replaceState(null, '', location.pathname + location.search + next);
+      applyFilters();
+    } else if (location.hash !== next) {
+      location.hash = next;
+    }
+  }
+
+  let state: State = readHash();
+
+  function filterActiveFor(cat: 'aves' | 'paisajes'): boolean {
+    // Sólo "no se muestra esta categoría" si exactamente la OTRA está activada
+    // en exclusiva.
+    if (!state.aves && !state.paisajes) return true; // ambos off = todo
+    if (state.aves && state.paisajes) return true; // ambos on = todo
+    return state[cat];
   }
 
   function applyFilters() {
     document.querySelectorAll<HTMLElement>('[data-heroes] [data-hero-category]').forEach((h) => {
-      const cat = h.dataset.heroCategory;
-      h.style.display = state.cat === 'all' || state.cat === cat ? '' : 'none';
+      const cat = h.dataset.heroCategory as 'aves' | 'paisajes';
+      h.style.display = filterActiveFor(cat) ? '' : 'none';
     });
 
     document.querySelectorAll<HTMLElement>('.gallery .card').forEach((card) => {
-      const cat = card.dataset.category;
-      const tags = (card.dataset.tags || '').split(/\s+/).filter(Boolean);
-      const passCat = state.cat === 'all' || cat === state.cat;
-      const passTag = !state.tag || tags.includes(state.tag);
-      card.classList.toggle('filter-out', !(passCat && passTag));
+      const cat = card.dataset.category as 'aves' | 'paisajes';
+      card.classList.toggle('filter-out', !filterActiveFor(cat));
     });
 
-    document.querySelectorAll<HTMLElement>('.site-nav a[data-filter]').forEach((a) => {
-      const f = a.dataset.filter;
-      a.classList.toggle('filter-active', f === state.cat);
-    });
-
-    document.querySelectorAll<HTMLButtonElement>('[data-tag-chips] [data-tag]').forEach((b) => {
-      b.setAttribute('aria-pressed', b.dataset.tag === state.tag ? 'true' : 'false');
+    document.querySelectorAll<HTMLAnchorElement>('.site-nav a[data-kind="toggle"]').forEach((a) => {
+      const f = a.dataset.filter as 'aves' | 'paisajes';
+      const active = state[f];
+      a.classList.toggle('filter-active', active);
+      a.setAttribute('aria-pressed', active ? 'true' : 'false');
     });
 
     window.dispatchEvent(new Event('gallery:filter-changed'));
   }
 
   function init() {
-    state.cat = readCatFromHash();
+    state = readHash();
     applyFilters();
 
     window.addEventListener('hashchange', () => {
-      state.cat = readCatFromHash();
+      state = readHash();
       applyFilters();
     });
 
-    document.querySelectorAll<HTMLButtonElement>('[data-tag-chips] [data-tag]').forEach((b) => {
-      b.addEventListener('click', () => {
-        state.tag = b.dataset.tag || '';
+    // Toggles AVES y PAISAJES: interceptamos el click en la home para mutar el
+    // state y reescribir el hash. Desde otras páginas, el browser navega
+    // normalmente al href y este script (en home) aplicará el estado al cargar.
+    document.querySelectorAll<HTMLAnchorElement>('.site-nav a[data-kind="toggle"]').forEach((a) => {
+      a.addEventListener('click', (e) => {
+        const pathSame =
+          a.pathname === location.pathname ||
+          a.pathname === location.pathname + '/' ||
+          a.pathname + '/' === location.pathname;
+        if (!pathSame) return;
+        e.preventDefault();
+        const f = a.dataset.filter as 'aves' | 'paisajes';
+        state = { ...state, [f]: !state[f] };
+        writeHash(state);
         applyFilters();
       });
     });
 
-    // Los anchors del nav con data-filter apuntan a /es/#aves o #paisajes. Cuando
-    // ya estamos en la home, interceptamos el click para evitar el re-fetch
-    // del navegador y sólo actualizamos el hash (que dispara hashchange).
-    document.querySelectorAll<HTMLAnchorElement>('.site-nav a[data-filter]').forEach((a) => {
+    // PORTADA: reset al default (aves on, paisajes off, hash limpio).
+    document.querySelectorAll<HTMLAnchorElement>('.site-nav a[data-kind="home"]').forEach((a) => {
       a.addEventListener('click', (e) => {
-        const samePath =
+        const pathSame =
           a.pathname === location.pathname ||
           a.pathname === location.pathname + '/' ||
           a.pathname + '/' === location.pathname;
-        if (!samePath) return;
+        if (!pathSame) return;
         e.preventDefault();
-        const f = a.dataset.filter || 'all';
-        location.hash = f === 'all' ? 'todas' : f;
+        state = { aves: true, paisajes: false };
+        writeHash(state, true);
+        applyFilters();
+        window.scrollTo({ top: 0, behavior: 'smooth' });
       });
-    });
-
-    // Tags dentro del info-panel de cada card/hero filtran in-page.
-    document.addEventListener('click', (e) => {
-      const target = e.target as HTMLElement;
-      const btn = target.closest<HTMLButtonElement>('.info-tag[data-tag]');
-      if (!btn) return;
-      e.preventDefault();
-      state.tag = btn.dataset.tag || '';
-      applyFilters();
-      window.scrollTo({ top: 0, behavior: 'smooth' });
     });
   }
 
