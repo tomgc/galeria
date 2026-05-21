@@ -105,6 +105,10 @@ a {
   transition: opacity var(--transition);
 }
 a:hover { opacity: 0.6; }
+/* Excepción: los anchors que envuelven una foto (thumb del card / hero) NO
+   deben bajar opacity al hover — el efecto traspasaba el fondo del body y
+   "blanqueaba" la imagen. El overlay del card ya da el feedback de hover. */
+a.thumb:hover { opacity: 1; }
 
 button {
   font: inherit;
