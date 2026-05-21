@@ -98,11 +98,15 @@ const galleryId = 'home-gallery';
   // Sincroniza también las clases active del nav del header y de los chips.
 
   type Cat = 'all' | 'aves' | 'paisajes';
-  const state = { cat: 'all' as Cat, tag: '' };
+  // Default = aves (lo más común). El hash "#todas" es el opt-in explícito
+  // para ver el catálogo completo; cualquier otro/vacío cae a aves.
+  const state = { cat: 'aves' as Cat, tag: '' };
 
   function readCatFromHash(): Cat {
     const h = location.hash.replace('#', '');
-    return h === 'aves' || h === 'paisajes' ? h : 'all';
+    if (h === 'aves' || h === 'paisajes') return h;
+    if (h === 'todas') return 'all';
+    return 'aves';
   }
 
   function applyFilters() {
@@ -159,12 +163,7 @@ const galleryId = 'home-gallery';
         if (!samePath) return;
         e.preventDefault();
         const f = a.dataset.filter || 'all';
-        location.hash = f === 'all' ? '' : f;
-        if (f === 'all' && location.hash === '') {
-          // hash vacío no dispara hashchange — invocamos manualmente.
-          state.cat = 'all';
-          applyFilters();
-        }
+        location.hash = f === 'all' ? 'todas' : f;
       });
     });
 

@@ -20,8 +20,10 @@ const home = `${base}/${locale}/`;
 // PORTADA, AVES y PAISAJES apuntan a la home — AVES/PAISAJES con hash que el
 // script de la home lee como filtro in-page. Desde otras páginas (sobre-mí,
 // contacto) el click navega a la home y aplica el filtro al cargar.
+// "todas" es un valor explícito del hash para que el default sin hash (= aves)
+// sea distinguible de "click en PORTADA → muestra todo el catálogo".
 const nav = [
-  { href: home, label: t('nav.home'), filter: 'all' },
+  { href: `${home}#todas`, label: t('nav.home'), filter: 'all' },
   { href: `${home}#aves`, label: t('nav.birds'), filter: 'aves' },
   { href: `${home}#paisajes`, label: t('nav.landscapes'), filter: 'paisajes' },
   { href: `${base}/${locale}/sobre-mi/`, label: t('nav.about'), filter: null },
@@ -74,6 +76,10 @@ const nav = [
 
 <style>
   .site-header {
+    position: sticky;
+    top: 0;
+    z-index: 20;
+    background: var(--bg);
     display: flex;
     align-items: center;
     gap: 24px;

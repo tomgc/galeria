@@ -72,11 +72,13 @@ const galleryId = 'home-gallery-en';
 
 <script>
   type Cat = 'all' | 'aves' | 'paisajes';
-  const state = { cat: 'all' as Cat, tag: '' };
+  const state = { cat: 'aves' as Cat, tag: '' };
 
   function readCatFromHash(): Cat {
     const h = location.hash.replace('#', '');
-    return h === 'aves' || h === 'paisajes' ? h : 'all';
+    if (h === 'aves' || h === 'paisajes') return h;
+    if (h === 'todas') return 'all';
+    return 'aves';
   }
 
   function applyFilters() {
@@ -130,11 +132,7 @@ const galleryId = 'home-gallery-en';
         if (!samePath) return;
         e.preventDefault();
         const f = a.dataset.filter || 'all';
-        location.hash = f === 'all' ? '' : f;
-        if (f === 'all' && location.hash === '') {
-          state.cat = 'all';
-          applyFilters();
-        }
+        location.hash = f === 'all' ? 'todas' : f;
       });
     });
 
