@@ -161,8 +161,13 @@ async function writePhoto(slug, updates) {
   if (updates.exif) merged.exif = { ...current.data.exif, ...updates.exif };
   if (updates.order === null) delete merged.order;
 
+  // Escritura atómica (C.4): si el proceso muere mid-write, el .md original
+  // queda intacto. POSIX rename es atómico dentro del mismo filesystem.
   const out = formatFrontmatter(merged) + (current.content || '');
-  await fs.writeFile(path.join(PHOTOS_MD, `${slug}.md`), out, 'utf-8');
+  const finalPath = path.join(PHOTOS_MD, `${slug}.md`);
+  const tmpPath = `${finalPath}.tmp`;
+  await fs.writeFile(tmpPath, out, 'utf-8');
+  await fs.rename(tmpPath, finalPath);
 }
 
 async function deletePhoto(slug) {
@@ -198,6 +203,39 @@ async function getThumb(slug) {
     .jpeg({ quality: 80 })
     .toFile(cache);
   return cache;
+}
+
+// Valida la forma de un body de PUT antes de tocar disco (C.8). Devuelve null
+// si OK o un string con el primer error encontrado. No exige todos los campos
+// porque el PUT es parcial (merge), pero los que vengan deben tener tipos
+// válidos para que el schema de Astro acepte el resultado al build.
+const VALID_CATEGORIES = new Set(['aves', 'paisajes']);
+
+function validatePhotoUpdate(body) {
+  if (!body || typeof body !== 'object') return 'body debe ser un objeto JSON';
+  if ('title_es' in body) {
+    if (typeof body.title_es !== 'string' || body.title_es.trim() === '') {
+      return 'title_es no puede estar vacío';
+    }
+  }
+  if ('category' in body && !VALID_CATEGORIES.has(body.category)) {
+    return `category inválida (esperado: ${[...VALID_CATEGORIES].join(' | ')})`;
+  }
+  if ('tags' in body) {
+    if (!Array.isArray(body.tags) || body.tags.some((t) => typeof t !== 'string')) {
+      return 'tags debe ser array de strings';
+    }
+  }
+  if ('featured' in body && typeof body.featured !== 'boolean') {
+    return 'featured debe ser boolean';
+  }
+  if ('order' in body && body.order !== null && typeof body.order !== 'number') {
+    return 'order debe ser number o null';
+  }
+  if ('location' in body && (typeof body.location !== 'object' || Array.isArray(body.location))) {
+    return 'location debe ser objeto';
+  }
+  return null;
 }
 
 function git(args) {
@@ -241,7 +279,7 @@ async function doPublish(message) {
   if (!dirty) return { skipped: 'no hay cambios' };
   auto.publishing = true;
   try {
-    await git(['add', 'src/content/photos', 'src/assets/photos']).catch(() => {});
+    await git(['add', 'src/content/photos', 'src/assets/photos']);
     await git(['commit', '-m', message]);
     await git(['push']);
     auto.lastPublishedAt = Date.now();
@@ -277,6 +315,8 @@ app.get('/api/photos', async (req, res) => {
 });
 
 app.put('/api/photos/:slug', async (req, res) => {
+  const err = validatePhotoUpdate(req.body);
+  if (err) return res.status(400).json({ error: err });
   try {
     await writePhoto(req.params.slug, req.body || {});
     markChange();
