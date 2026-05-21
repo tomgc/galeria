@@ -33,3 +33,10 @@
 - Lighthouse >90 en Performance/SEO/Accessibility/Best Practices.
 - Sitio navegable sin JavaScript (excepto: lightbox, toggle de tema, obfuscación de correo, anti-click-derecho).
 - Correo NUNCA en texto plano en el HTML renderizado.
+
+## Últimos cambios
+- 2026-05-20 — Completados los metadatos de las 27 fotos restantes (46/46). Viaje a Costa Rica incorporado (quetzal, búho de anteojos, perezoso, dos colibríes), Patagonia austral (camino a cordillera, loica, aguiluchos sobre bosque de lenga), aves costeras chilenas (rayador, perritos), y nuevos identificados (martín pescador grande macho/hembra, pitío, golondrina chilena).
+- 2026-05-20 — `scripts/update-photo-metadata.py` extendido a 46 detecciones; ejecutarlo regenera todos los `.md` preservando EXIF.
+- e262454 — chore: persistir script de update de metadatos para uso posterior.
+- a9c3efc — feat: primeras fotos reales — 46 ingeridas, 19 con metadatos completos.
+- b67cf1b — fix(a11y): regresión introducida en el port de F.
