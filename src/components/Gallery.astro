@@ -23,9 +23,6 @@ const decorated = photos.map((p) => {
   return { photo: p, wide, ratio };
 });
 
-const densityLabel = locale === 'es' ? 'Vista' : 'View';
-const looseLabel = locale === 'es' ? 'amplia' : 'spacious';
-const compactLabel = locale === 'es' ? 'compacta' : 'compact';
 ---
 
 {photos.length === 0 ? (
@@ -35,14 +32,6 @@ const compactLabel = locale === 'es' ? 'compacta' : 'compact';
   </div>
 ) : (
   <>
-    <div class="controls" data-controls-for={galleryId}>
-      <div class="ctl-group">
-        <span class="ctl-label">{densityLabel}</span>
-        <button class="ctl-chip" type="button" data-density="loose" aria-pressed="true">{looseLabel}</button>
-        <button class="ctl-chip" type="button" data-density="compact">{compactLabel}</button>
-      </div>
-    </div>
-
     <div id={galleryId} class="gallery density-loose" data-masonry data-total={photos.length}>
       {decorated.map(({ photo, wide }, i) => (
         <PhotoCard
@@ -61,38 +50,6 @@ const compactLabel = locale === 'es' ? 'compacta' : 'compact';
 )}
 
 <style>
-  .controls {
-    display: flex;
-    align-items: center;
-    gap: 16px;
-    margin-bottom: 16px;
-    padding: 8px 0;
-  }
-  .ctl-group { display: flex; align-items: center; gap: 4px; }
-  .ctl-label {
-    font-size: 11px;
-    text-transform: uppercase;
-    letter-spacing: 0.06em;
-    color: var(--fg-faint);
-    margin-right: 6px;
-  }
-  .ctl-chip {
-    background: transparent;
-    border: 1px solid var(--border);
-    color: var(--fg-muted);
-    padding: 4px 10px;
-    font: inherit;
-    font-size: 12px;
-    cursor: pointer;
-    transition: color 120ms, border-color 120ms, background 120ms;
-  }
-  .ctl-chip:hover { color: var(--fg); border-color: var(--fg-muted); }
-  .ctl-chip[aria-pressed='true'] {
-    background: var(--fg);
-    color: var(--bg);
-    border-color: var(--fg);
-  }
-
   .gallery {
     display: grid;
     grid-template-columns: 1fr;
@@ -104,10 +61,16 @@ const compactLabel = locale === 'es' ? 'compacta' : 'compact';
     --cols-md: 2;
     --cols-lg: 3;
   }
+  /* Compacta: aproximadamente el doble de columnas → fotos a media altura. */
   .gallery.density-compact {
     --cols-sm: 2;
-    --cols-md: 3;
-    --cols-lg: 4;
+    --cols-md: 4;
+    --cols-lg: 6;
+  }
+  /* En compacta, las panorámicas dejan de ensancharse a 2 cols (quedan
+     desproporcionadamente grandes con el grid denso). */
+  .gallery.density-compact > .card.wide {
+    grid-column: auto;
   }
 
   @media (min-width: 640px) {
@@ -232,7 +195,7 @@ const compactLabel = locale === 'es' ? 'compacta' : 'compact';
       g.classList.remove('density-loose', 'density-compact');
       g.classList.add(`density-${d}`);
     });
-    document.querySelectorAll<HTMLButtonElement>('.controls [data-density]').forEach((b) => {
+    document.querySelectorAll<HTMLButtonElement>('.density-btn[data-density]').forEach((b) => {
       b.setAttribute('aria-pressed', b.dataset.density === d ? 'true' : 'false');
     });
     window.dispatchEvent(new Event('gallery:relayout'));
@@ -291,7 +254,7 @@ const compactLabel = locale === 'es' ? 'compacta' : 'compact';
 
   function setupDensityControls() {
     applyDensity(readDensity());
-    document.querySelectorAll<HTMLButtonElement>('.controls [data-density]').forEach((btn) => {
+    document.querySelectorAll<HTMLButtonElement>('.density-btn[data-density]').forEach((btn) => {
       btn.addEventListener('click', () => {
         const d = btn.dataset.density as Density;
         localStorage.setItem('galeria.density', d);

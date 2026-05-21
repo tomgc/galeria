@@ -60,6 +60,43 @@ const nav = [
   </nav>
 
   <div class="toggles">
+    <div class="density" role="group" aria-label={locale === 'es' ? 'Vista' : 'View'}>
+      <button
+        type="button"
+        class="toggle density-btn"
+        data-density="loose"
+        aria-pressed="true"
+        aria-label={locale === 'es' ? 'Vista amplia' : 'Spacious view'}
+        title={locale === 'es' ? 'Vista amplia' : 'Spacious view'}
+      >
+        <svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true">
+          <rect x="1" y="1" width="5" height="5" fill="currentColor" />
+          <rect x="8" y="1" width="5" height="5" fill="currentColor" />
+          <rect x="1" y="8" width="5" height="5" fill="currentColor" />
+          <rect x="8" y="8" width="5" height="5" fill="currentColor" />
+        </svg>
+      </button>
+      <button
+        type="button"
+        class="toggle density-btn"
+        data-density="compact"
+        aria-pressed="false"
+        aria-label={locale === 'es' ? 'Vista compacta' : 'Compact view'}
+        title={locale === 'es' ? 'Vista compacta' : 'Compact view'}
+      >
+        <svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true">
+          <rect x="0" y="0" width="3" height="3" fill="currentColor" />
+          <rect x="5.5" y="0" width="3" height="3" fill="currentColor" />
+          <rect x="11" y="0" width="3" height="3" fill="currentColor" />
+          <rect x="0" y="5.5" width="3" height="3" fill="currentColor" />
+          <rect x="5.5" y="5.5" width="3" height="3" fill="currentColor" />
+          <rect x="11" y="5.5" width="3" height="3" fill="currentColor" />
+          <rect x="0" y="11" width="3" height="3" fill="currentColor" />
+          <rect x="5.5" y="11" width="3" height="3" fill="currentColor" />
+          <rect x="11" y="11" width="3" height="3" fill="currentColor" />
+        </svg>
+      </button>
+    </div>
     <a class="toggle" href={otherLocaleHref} hreflang={otherLocale} title={t('lang.switch')}>
       {locale === 'es' ? 'ES / EN' : 'EN / ES'}
     </a>
@@ -128,12 +165,27 @@ const nav = [
     border: 0;
     transition: color 160ms ease;
     cursor: pointer;
+    position: relative;
+    padding-block: 4px;
   }
   .site-nav a:hover,
-  .site-nav a.active,
-  .site-nav a.filter-active {
+  .site-nav a.active {
     color: var(--fg);
     opacity: 1;
+  }
+  /* Toggle de filtro activo: subrayado grueso para que el cambio sea obvio. */
+  .site-nav a[data-kind='toggle'].filter-active {
+    color: var(--fg);
+    opacity: 1;
+  }
+  .site-nav a[data-kind='toggle'].filter-active::after {
+    content: '';
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: -2px;
+    height: 2px;
+    background: var(--fg);
   }
 
   .toggles {
@@ -163,6 +215,32 @@ const nav = [
     font-size: 14px;
     line-height: 1;
     padding: 6px 9px;
+  }
+
+  /* Selector de densidad (Vista amplia / compacta) — minimalista, sólo iconos */
+  .density {
+    display: inline-flex;
+    border: 1px solid var(--border);
+    border-radius: 0;
+  }
+  .density-btn {
+    background: var(--bg);
+    border: 0;
+    color: var(--fg-faint);
+    padding: 5px 7px;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    transition: color 160ms ease, background 160ms ease;
+  }
+  .density-btn + .density-btn {
+    border-left: 1px solid var(--border);
+  }
+  .density-btn:hover { color: var(--fg); }
+  .density-btn[aria-pressed='true'] {
+    color: var(--bg);
+    background: var(--fg);
   }
 
   /* En pantallas chicas el nav cae a una segunda fila, el brand y los toggles
